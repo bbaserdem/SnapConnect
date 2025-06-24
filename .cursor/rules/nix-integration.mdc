@@ -1,0 +1,22 @@
+---
+description: Best practices for setting up local dev environment in NixOS; both for flake and for choosing node packages.
+globs: flake.nix,nix/*
+alwaysApply: false
+---
+
+# NixOS
+
+## Overview
+Make sure we can develop on NixOS, and still have it run elsewhere.
+We will be using flakes, and the current shell will have direnv to automatically load our dev shell.
+
+## Guidelines for writing to flake.nix
+1. inputs.nixpkgs should point to the unstable branch of nixpkgs.
+2. Use flake-utils to make flake.nix more readable
+3. Keep our flake as a hybrid model; prefer to fetch packages using the tech stack package manager whenever you can.
+4. Avoid shell hooks that have output to avoid clutter when entering a dev shell.
+5. Keep all nix files, except `flake.nix` and `flake.lock`, in a directory named `nix` to reduce clutter.
+
+## Guidelines for picking tech stack
+- Don't suggest packages and software that is known to be incompatible with NixOS.
+- State when a software I want to use is incompatible developing with NixOS.

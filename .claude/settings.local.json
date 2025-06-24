@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter doctor:*)",
+      "Bash(direnv reload:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": []
+  }
+}
