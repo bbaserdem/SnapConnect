@@ -5,6 +5,23 @@ The flow covers onboarding, content creation, sharing, and interaction with AI-d
 
 ---
 
+## 2. User Stories
+
+We will be using bodymod enthusiast as our primary users.
+
+### Core functionality stories
+
+- As a bodymod enthusiast, I want to be able to send ephemeral messages so that I can keep private communications private.
+- As a bodymod enthusiast, I want to share my mods with other people, either privately through DMs or publically from stories.
+- As a bodymod enthusiast, I want to see stories by people with body mods to discuss the benefits and challenges of body mods.
+
+### AI Enhancement RAG stories
+
+- As a bodymod enthusiast, I want AI to automatically tag which bodymod I'm featuring in my messages or stories.
+- As a bodymod enthusiast, I want to be able to look up stories with the tags I want 
+- As a bodymod enthusiast, I want to connect with new people who have the bodymod I'm interested in.
+- As a bodymod enthusiast, I want to be recommended bodymods suggested by my activity and engagement patterns.
+
 ## 1. Onboarding
 
 The primary goal of onboarding is to get the user set up and ready to create and share content.

@@ -23,8 +23,8 @@
         androidComposition = androidEnv.composeAndroidPackages {
           cmdLineToolsVersion = "8.0";
           platformToolsVersion = "34.0.4";
-          buildToolsVersions = ["30.0.3" "33.0.2" "34.0.0"];
-          platformVersions = ["33" "34" "35"];
+          buildToolsVersions = ["33.0.2" "34.0.0" "35.0.0" "36.0.0"];
+          platformVersions = ["33" "34" "35" "36"];
           abiVersions = ["armeabi-v7a" "arm64-v8a" "x86_64"];
           includeNDK = true;
           ndkVersions = ["27.0.12077973"];
@@ -65,6 +65,7 @@
               jdk17
               mesa-demos
               firebase-tools
+              ffmpeg
             ];
             # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
             LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [vulkan-loader libGL]}";
