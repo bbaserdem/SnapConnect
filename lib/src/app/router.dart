@@ -7,8 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/home/presentation/home_screen.dart';
 import '../features/auth/auth.dart';
+import '../features/camera/presentation/camera_screen.dart';
+import '../features/friends/presentation/friends_screen.dart';
+import '../features/messages/presentation/messages_screen.dart';
+import '../features/stories/presentation/stories_screen.dart';
+import 'navigation_shell.dart';
 
 /// Router configuration provider for the application
 final routerProvider = Provider<GoRouter>((ref) {
@@ -83,11 +87,56 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileSetupScreen(),
       ),
 
-      // Protected routes
-      GoRoute(
-        path: '/',
-        name: 'home',
-        builder: (context, state) => const HomeScreen(),
+      // Main navigation shell with bottom navigation
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return NavigationShell(navigationShell: navigationShell);
+        },
+        branches: [
+          // Camera tab (default)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                name: 'camera',
+                builder: (context, state) => const CameraScreen(),
+              ),
+            ],
+          ),
+          
+          // Friends tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/friends',
+                name: 'friends',
+                builder: (context, state) => const FriendsScreen(),
+              ),
+            ],
+          ),
+          
+          // Messages tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/messages',
+                name: 'messages',
+                builder: (context, state) => const MessagesScreen(),
+              ),
+            ],
+          ),
+          
+          // Stories tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/stories',
+                name: 'stories',
+                builder: (context, state) => const StoriesScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

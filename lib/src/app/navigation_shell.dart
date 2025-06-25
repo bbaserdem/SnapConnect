@@ -1,0 +1,86 @@
+/// Main navigation shell widget that provides the bottom navigation bar.
+/// 
+/// This widget hosts the four primary navigation destinations:
+/// Camera, Friends, Messages, and Stories.
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+/// Navigation shell widget that provides the bottom navigation bar
+class NavigationShell extends StatelessWidget {
+  /// Creates a navigation shell widget
+  const NavigationShell({
+    required this.navigationShell,
+    super.key,
+  });
+
+  /// The navigation shell from go_router
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context, ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
+        },
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primaryContainer,
+        destinations: [
+          NavigationDestination(
+            icon: Icon(
+              Icons.camera_alt_outlined,
+              size: 24,
+            ),
+            selectedIcon: Icon(
+              Icons.camera_alt,
+              size: 24,
+            ),
+            label: 'Camera',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.people_outlined,
+              size: 24,
+            ),
+            selectedIcon: Icon(
+              Icons.people,
+              size: 24,
+            ),
+            label: 'Friends',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.chat_bubble_outline,
+              size: 24,
+            ),
+            selectedIcon: Icon(
+              Icons.chat_bubble,
+              size: 24,
+            ),
+            label: 'Messages',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.auto_stories_outlined,
+              size: 24,
+            ),
+            selectedIcon: Icon(
+              Icons.auto_stories,
+              size: 24,
+            ),
+            label: 'Stories',
+          ),
+        ],
+      ),
+    );
+  }
+} 

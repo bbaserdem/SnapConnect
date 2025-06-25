@@ -77,12 +77,11 @@
             QT_QPA_PLATFORM = "wayland;xcb"; # emulator related: try using wayland, otherwise fall back to X.
             # NB: due to the emulator's bundled qt version, it currently does not start with QT_QPA_PLATFORM="wayland".
             # Maybe one day this will be supported.
-            
+
             # Android Emulator Performance Optimizations
             QEMU_OPTS = "-machine accel=kvm"; # Enable KVM hardware acceleration for faster emulation
             # Note: ANDROID_EMULATOR_USE_SYSTEM_LIBS is NOT set in NixOS as it conflicts with Nix store paths
             buildInputs = [
-              androidSdk
               flutter
               qemu_kvm
               gradle
@@ -90,7 +89,11 @@
               mesa-demos
               firebase-tools
               ffmpeg
+              libsecret
+              pkg-config
+              # Custom environments
               devPython
+              androidSdk
             ];
             # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
             LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [vulkan-loader libGL]}";
