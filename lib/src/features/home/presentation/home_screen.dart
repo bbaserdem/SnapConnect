@@ -92,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
                 Text(
                   'AI-powered social media with smart photo sharing',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -135,6 +135,17 @@ class HomeScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 8),
                             const Text('Navigation: Working'),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text('Version: 0.1.1 - Phase 1.1 Complete'),
                           ],
                         ),
                       ],
