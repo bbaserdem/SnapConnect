@@ -75,54 +75,65 @@ class StoriesScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
+      child: InkWell(
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Add to Story functionality coming in Phase 1.5'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: colorScheme.primary,
+                    width: 2,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Icon(
+                  Icons.add,
                   color: colorScheme.primary,
-                  width: 2,
-                  style: BorderStyle.solid,
+                  size: 24,
                 ),
               ),
-              child: Icon(
-                Icons.add,
-                color: colorScheme.primary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Add to Your Story',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Add to Your Story',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Share a moment with your friends',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                    Text(
+                      'Share a moment with your friends',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: colorScheme.onSurface.withValues(alpha: 0.4),
-              size: 16,
-            ),
-          ],
+              Icon(
+                Icons.arrow_forward_ios,
+                color: colorScheme.onSurface.withValues(alpha: 0.4),
+                size: 16,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -163,10 +174,10 @@ class StoriesScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return GestureDetector(
-      onTap: () => _openStory(context, name),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
+    return Card(
+      child: InkWell(
+        onTap: () => _openStory(context, name),
+        borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
             // Story preview background
@@ -174,6 +185,7 @@ class StoriesScreen extends ConsumerWidget {
               width: double.infinity,
               height: double.infinity,
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -197,6 +209,7 @@ class StoriesScreen extends ConsumerWidget {
               width: double.infinity,
               height: double.infinity,
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,

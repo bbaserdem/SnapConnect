@@ -1,7 +1,7 @@
 /// Main navigation shell widget that provides the bottom navigation bar.
 /// 
-/// This widget hosts the four primary navigation destinations:
-/// Camera, Friends, Messages, and Stories.
+/// This widget hosts the five primary navigation destinations:
+/// Camera, Friends, Profile, Messages, and Stories.
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +34,7 @@ class NavigationShell extends StatelessWidget {
         },
         backgroundColor: colorScheme.surface,
         indicatorColor: colorScheme.primaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
         destinations: [
           NavigationDestination(
             icon: Icon(
@@ -56,6 +57,17 @@ class NavigationShell extends StatelessWidget {
               size: 24,
             ),
             label: 'Friends',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.person_outline,
+              size: 24,
+            ),
+            selectedIcon: Icon(
+              Icons.person,
+              size: 24,
+            ),
+            label: 'Profile',
           ),
           NavigationDestination(
             icon: Icon(

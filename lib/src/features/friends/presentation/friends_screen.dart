@@ -113,76 +113,88 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              backgroundColor: colorScheme.primary,
-              child: Text(
-                avatarText,
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+      child: InkWell(
+        onTap: () {
+          // Visual feedback for tapping friend card
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tapped on $name'),
+              duration: const Duration(milliseconds: 800),
             ),
-            if (isOnline)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colorScheme.surface,
-                      width: 2,
-                    ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: Stack(
+            children: [
+              CircleAvatar(
+                backgroundColor: colorScheme.primary,
+                child: Text(
+                  avatarText,
+                  style: TextStyle(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-          ],
-        ),
-        title: Text(name),
-        subtitle: Text(username),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            _handleFriendAction(value, name);
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'message',
-              child: Row(
-                children: [
-                  Icon(Icons.message),
-                  SizedBox(width: 8),
-                  Text('Send Message'),
-                ],
+              if (isOnline)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colorScheme.surface,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          title: Text(name),
+          subtitle: Text(username),
+          trailing: PopupMenuButton<String>(
+            onSelected: (value) {
+              _handleFriendAction(value, name);
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'message',
+                child: Row(
+                  children: [
+                    Icon(Icons.message),
+                    SizedBox(width: 8),
+                    Text('Send Message'),
+                  ],
+                ),
               ),
-            ),
-            const PopupMenuItem(
-              value: 'block',
-              child: Row(
-                children: [
-                  Icon(Icons.block),
-                  SizedBox(width: 8),
-                  Text('Block'),
-                ],
+              const PopupMenuItem(
+                value: 'block',
+                child: Row(
+                  children: [
+                    Icon(Icons.block),
+                    SizedBox(width: 8),
+                    Text('Block'),
+                  ],
+                ),
               ),
-            ),
-            const PopupMenuItem(
-              value: 'remove',
-              child: Row(
-                children: [
-                  Icon(Icons.person_remove),
-                  SizedBox(width: 8),
-                  Text('Remove Friend'),
-                ],
+              const PopupMenuItem(
+                value: 'remove',
+                child: Row(
+                  children: [
+                    Icon(Icons.person_remove),
+                    SizedBox(width: 8),
+                    Text('Remove Friend'),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -199,35 +211,47 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: colorScheme.secondary,
-          child: Text(
-            avatarText,
-            style: TextStyle(
-              color: colorScheme.onSecondary,
-              fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () {
+          // Visual feedback for tapping request card
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tapped on $name request'),
+              duration: const Duration(milliseconds: 800),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: colorScheme.secondary,
+            child: Text(
+              avatarText,
+              style: TextStyle(
+                color: colorScheme.onSecondary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        title: Text(name),
-        subtitle: Text(username),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.check, color: Colors.green),
-              onPressed: () {
-                _handleRequestAction('accept', name);
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.close, color: Colors.red),
-              onPressed: () {
-                _handleRequestAction('decline', name);
-              },
-            ),
-          ],
+          title: Text(name),
+          subtitle: Text(username),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(Icons.check, color: Colors.green),
+                onPressed: () {
+                  _handleRequestAction('accept', name);
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.close, color: Colors.red),
+                onPressed: () {
+                  _handleRequestAction('decline', name);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

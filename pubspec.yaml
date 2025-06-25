@@ -22,7 +22,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # 0.2.x - Phase 2 development (AI Integration)
 # 0.3.x - Phase 3 development (AR Features)
 # 1.0.0 - Production release
-version: 0.1.1+1
+version: 0.1.2+1
 
 environment:
   sdk: ^3.8.1

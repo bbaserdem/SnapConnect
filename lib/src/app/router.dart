@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/auth.dart';
 import '../features/camera/presentation/camera_screen.dart';
 import '../features/friends/presentation/friends_screen.dart';
+import '../features/profile/profile.dart';
 import '../features/messages/presentation/messages_screen.dart';
 import '../features/stories/presentation/stories_screen.dart';
 import 'navigation_shell.dart';
@@ -111,6 +112,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/friends',
                 name: 'friends',
                 builder: (context, state) => const FriendsScreen(),
+              ),
+            ],
+          ),
+          
+          // Profile tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                name: 'profile',
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),

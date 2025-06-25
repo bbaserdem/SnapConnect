@@ -91,25 +91,36 @@ class CameraScreen extends ConsumerWidget {
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: 5,
+                    itemCount: 8, // Increased count to make scrolling more apparent
                     itemBuilder: (context, index) {
-                      return Container(
-                        width: 60,
-                        height: 60,
-                        margin: const EdgeInsets.only(right: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
+                      return GestureDetector(
+                        onTap: () {
+                          // Add visual feedback for filter selection
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Filter ${index + 1} selected'),
+                              duration: const Duration(milliseconds: 800),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                            ),
                           ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'F${index + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                          child: Center(
+                            child: Text(
+                              'F${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
