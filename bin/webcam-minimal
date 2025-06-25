@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# 
+# webcam-minimal: Set webcam to minimal settings for maximum emulator performance
+# Sets webcam to 320x240 YUYV format @ 15fps
+#
+
+echo "⚡ Setting webcam to minimal settings for maximum emulator performance..."
+
+# Set webcam to very low resolution with uncompressed format
+v4l2-ctl --device=/dev/video0 --set-fmt-video=width=320,height=240,pixelformat=YUYV
+
+# Set frame rate to 15fps for less load
+v4l2-ctl --device=/dev/video0 --set-parm=15
+
+echo "✅ Webcam set to minimal: 320x240 YUYV @ 15fps" 

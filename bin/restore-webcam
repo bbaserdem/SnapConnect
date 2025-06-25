@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# 
+# restore-webcam: Restore webcam to high-quality settings for video calls
+# Sets webcam to 1280x720 MJPG format @ 30fps
+#
+
+echo "📹 Restoring webcam to high-quality settings for video calls..."
+
+# Set webcam to HD format and resolution
+v4l2-ctl --device=/dev/video0 --set-fmt-video=width=1280,height=720,pixelformat=MJPG
+
+# Set frame rate to 30fps
+v4l2-ctl --device=/dev/video0 --set-parm=30
+
+echo "✅ Webcam restored: 1280x720 MJPG @ 30fps (perfect for video calls)" 

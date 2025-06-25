@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# 
+# optimize-webcam: Configure webcam for optimal Android emulator performance
+# Sets webcam to 640x480 MJPG format @ 30fps
+#
+
+echo "🔧 Optimizing webcam for Android emulator..."
+
+# Set webcam format and resolution
+v4l2-ctl --device=/dev/video0 --set-fmt-video=width=640,height=480,pixelformat=MJPG
+
+# Set frame rate
+v4l2-ctl --device=/dev/video0 --set-parm=30
+
+echo "✅ Webcam optimized: 640x480 MJPG @ 30fps" 

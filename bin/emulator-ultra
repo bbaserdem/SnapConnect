@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# 
+# emulator-ultra: Launch Android emulator with ultra-performance optimizations
+# Usage: emulator-ultra -avd <avd_name>
+#
+
+emulator \
+  -gpu host \
+  -no-snapshot-save \
+  -no-boot-anim \
+  -memory 4096 \
+  -cores 6 \
+  -camera-back webcam0 \
+  -camera-front webcam0 \
+  -feature -Vulkan \
+  -writable-system \
+  -skip-adb-auth \
+  -no-audio \
+  -prop persist.sys.ui.hw=1 \
+  "$@" 

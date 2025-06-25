@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# 
+# setup-physical-device: Configure a physical Android device for camera development
+# Much better performance than emulator for camera work
+#
+
+echo "📱 Setting up physical Android device for camera development..."
+
+# Enable developer options and USB debugging
+echo "1. Enable Developer Options:"
+echo "   Settings → About Phone → Tap 'Build Number' 7 times"
+echo ""
+echo "2. Enable USB Debugging:"
+echo "   Settings → Developer Options → USB Debugging"
+echo ""
+echo "3. Connect device via USB and run:"
+echo "   adb devices"
+echo ""
+
+# Check if device is connected
+if adb devices | grep -q "device$"; then
+    echo "✅ Physical device detected!"
+    
+    # Install app to device
+    echo "🚀 To install your app:"
+    echo "   flutter run"
+    echo ""
+    echo "📷 Camera will work at full native performance!"
+else
+    echo "⚠️  No physical device detected. Please connect your device and enable USB debugging."
+fi 

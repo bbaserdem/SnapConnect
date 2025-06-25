@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# 
+# webcam-ultra: Set webcam to ultra-high quality for professional video calls
+# Sets webcam to 1920x1080 MJPG format @ 30fps
+#
+
+echo "🎬 Setting webcam to ultra-high quality (1080p)..."
+
+# Set webcam to Full HD format and resolution
+v4l2-ctl --device=/dev/video0 --set-fmt-video=width=1920,height=1080,pixelformat=MJPG
+
+# Set frame rate to 30fps
+v4l2-ctl --device=/dev/video0 --set-parm=30
+
+echo "✅ Webcam set to ultra-high quality: 1920x1080 MJPG @ 30fps" 

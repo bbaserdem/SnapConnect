@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# 
+# emulator-camera: Launch Android emulator with camera and performance optimizations
+# Usage: emulator-camera -avd <avd_name>
+#
+
+emulator \
+  -gpu host \
+  -no-snapshot-save \
+  -no-boot-anim \
+  -memory 4096 \
+  -cores 6 \
+  -camera-back webcam0 \
+  -camera-front webcam0 \
+  -feature -Vulkan \
+  -writable-system \
+  "$@" 

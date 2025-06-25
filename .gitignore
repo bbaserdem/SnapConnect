@@ -104,15 +104,7 @@ coverage/
 **/ios/firebase_app_id_file.json
 
 # Environment variables
-.env
-.env.*
-!.env.example
-
-# Environment files
-.env.local
-.env.development
-.env.production
-.env.*.local
+.env*local
 
 # Nix related
 .direnv/

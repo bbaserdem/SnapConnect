@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# 
+# emulator-optimized: Launch Android emulator in headless mode with performance optimizations
+# Usage: emulator-optimized -avd <avd_name>
+#
+
+emulator \
+  -gpu host \
+  -no-snapshot-save \
+  -no-boot-anim \
+  -memory 4096 \
+  -cores 6 \
+  -camera-back webcam0 \
+  -camera-front webcam0 \
+  -feature -Vulkan \
+  -no-window \
+  "$@" 

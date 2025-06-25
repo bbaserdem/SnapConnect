@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# 
+# emulator-dev: Launch Android emulator optimized for development with emulated cameras
+# Usage: emulator-dev -avd <avd_name>
+#
+
+echo "🚀 Starting development emulator with emulated cameras..."
+
+emulator \
+  -gpu host \
+  -no-snapshot-save \
+  -no-boot-anim \
+  -memory 4096 \
+  -cores 6 \
+  -feature -Vulkan \
+  -writable-system \
+  -show-kernel \
+  "$@"
+
+echo "📷 Emulator started with smooth emulated cameras!" 
