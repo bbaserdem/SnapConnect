@@ -8,10 +8,32 @@ import 'package:flutter/material.dart';
 /// Application theme configuration class
 class AppTheme {
   // Primary Colors - Blue and Orange
-  static const Color _vibrantBlue = Color(0xFF005af5);
-  static const Color _vibrantOrange = Color(0xFFeb430c);
   static const Color _lightBlue = Color(0xFF6699ff);
   static const Color _lightOrange = Color(0xFFff6640);
+
+  /// Common app bar theme configuration
+  static const AppBarTheme _appBarTheme = AppBarTheme(
+    centerTitle: true,
+    elevation: 0,
+  );
+
+  /// Common elevated button theme configuration
+  static final ElevatedButtonThemeData _elevatedButtonTheme = ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  );
+
+  /// Common card theme configuration
+  static final CardThemeData _cardTheme = CardThemeData(
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+  );
 
   /// Light theme configuration
   static ThemeData get lightTheme => ThemeData(
@@ -24,24 +46,9 @@ class AppTheme {
       secondary: _lightOrange,
       tertiary: _lightOrange,
     ),
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
+    appBarTheme: _appBarTheme,
+    elevatedButtonTheme: _elevatedButtonTheme,
+    cardTheme: _cardTheme,
   );
 
   /// Dark theme configuration
@@ -54,23 +61,8 @@ class AppTheme {
       secondary: _lightOrange,
       tertiary: _lightOrange,
     ),
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
+    appBarTheme: _appBarTheme,
+    elevatedButtonTheme: _elevatedButtonTheme,
+    cardTheme: _cardTheme,
   );
 } 

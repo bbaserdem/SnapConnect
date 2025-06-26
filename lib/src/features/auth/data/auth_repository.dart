@@ -5,6 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../common/utils/error_handler.dart';
+import '../../../config/constants.dart';
+
 /// Provider for the AuthRepository
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
@@ -33,12 +36,19 @@ class AuthRepository {
       final normalizedUsername = username.toLowerCase().trim();
       
       // Additional validation on the backend
-      if (normalizedUsername.length < 3 || normalizedUsername.length > 30) {
-        throw Exception('Username must be between 3 and 30 characters');
+      if (normalizedUsername.length < AppConstants.minUsernameLength || 
+          normalizedUsername.length > AppConstants.maxUsernameLength) {
+        throw ErrorHandler.createException(
+          'Username must be between ${AppConstants.minUsernameLength} and ${AppConstants.maxUsernameLength} characters',
+          operation: 'validate username',
+        );
       }
       
       if (!RegExp(r'^[a-z0-9_]+$').hasMatch(normalizedUsername)) {
-        throw Exception('Username can only contain lowercase letters, numbers, and underscores');
+        throw ErrorHandler.createException(
+          'Username can only contain lowercase letters, numbers, and underscores',
+          operation: 'validate username format',
+        );
       }
       
       final querySnapshot = await firestore
@@ -50,10 +60,18 @@ class AuthRepository {
       return querySnapshot.docs.isEmpty;
     } catch (e) {
       // Re-throw with more context if it's our validation error
-      if (e.toString().contains('Username')) {
+      if (e.toString().contains('Username') || e.toString().contains('validate username')) {
         rethrow;
       }
-      throw Exception('Failed to check username availability: $e');
+      
+      ErrorHandler.logError('check username availability', e, additionalInfo: {
+        'username': username,
+      });
+      
+      throw ErrorHandler.createException(
+        'Unable to verify username availability. Please try again.',
+        operation: 'check username availability',
+      );
     }
   }
 
@@ -88,19 +106,45 @@ class AuthRepository {
           email: email,
           username: username, // _createUserDocument will normalize it
         );
+        
+        ErrorHandler.logSuccess('user sign up', additionalInfo: {
+          'uid': userCredential.user!.uid,
+          'email': email,
+          'username': username,
+        });
       } else {
-        throw Exception('Failed to create user account');
+        throw ErrorHandler.createException(
+          'Authentication succeeded but user account was not created properly',
+          operation: 'create user account',
+        );
       }
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      ErrorHandler.logError('sign up with email and password', e, additionalInfo: {
+        'email': email,
+        'username': username,
+      });
+      throw Exception(ErrorHandler.handleFirebaseAuthException(e));
     } catch (e) {
       // Catch any other errors and ensure proper error handling
-      if (e.toString().contains('Username')) {
+      if (e.toString().contains('Username') || e.toString().contains('validate username')) {
         rethrow;
       }
-      throw Exception('Sign up failed: $e');
+      
+      ErrorHandler.logError('sign up process', e, additionalInfo: {
+        'email': email,
+        'username': username,
+      });
+      
+      if (e is Exception) {
+        throw Exception(ErrorHandler.handleGeneralException(e));
+      } else {
+        throw ErrorHandler.createException(
+          'An unexpected error occurred during sign up. Please try again.',
+          operation: 'sign up',
+        );
+      }
     }
   }
 
@@ -115,12 +159,22 @@ class AuthRepository {
         appVerificationDisabledForTesting: false, // Set to true only for testing
       );
 
-      return await auth.signInWithEmailAndPassword(
+      final userCredential = await auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      
+      ErrorHandler.logSuccess('user sign in', additionalInfo: {
+        'uid': userCredential.user?.uid,
+        'email': email,
+      });
+      
+      return userCredential;
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      ErrorHandler.logError('sign in with email and password', e, additionalInfo: {
+        'email': email,
+      });
+      throw Exception(ErrorHandler.handleFirebaseAuthException(e));
     }
   }
 
@@ -132,9 +186,23 @@ class AuthRepository {
   /// Get user document from Firestore
   Future<DocumentSnapshot<Map<String, dynamic>>?> getUserDocument(String uid) async {
     try {
-      return await firestore.collection('users').doc(uid).get();
+      final document = await firestore.collection('users').doc(uid).get();
+      
+      ErrorHandler.logSuccess('get user document', additionalInfo: {
+        'uid': uid,
+        'exists': document.exists,
+      });
+      
+      return document;
     } catch (e) {
-      throw Exception('Failed to get user document: $e');
+      ErrorHandler.logError('get user document', e, additionalInfo: {
+        'uid': uid,
+      });
+      
+      throw ErrorHandler.createException(
+        'Unable to retrieve user profile. Please try again.',
+        operation: 'get user document',
+      );
     }
   }
 
@@ -148,12 +216,35 @@ class AuthRepository {
         final interestTags = data['interest_tags'] as List?;
         
         // Profile is complete if user has both bio and interest tags
-        return bio != null && bio.isNotEmpty && 
-               interestTags != null && interestTags.isNotEmpty;
+        final isComplete = bio != null && bio.isNotEmpty && 
+                          interestTags != null && interestTags.isNotEmpty;
+        
+        ErrorHandler.logSuccess('check profile setup status', additionalInfo: {
+          'uid': uid,
+          'isComplete': isComplete,
+          'hasBio': bio != null && bio.isNotEmpty,
+          'hasInterestTags': interestTags != null && interestTags.isNotEmpty,
+        });
+        
+        return isComplete;
       }
+      
+      ErrorHandler.logSuccess('check profile setup status', additionalInfo: {
+        'uid': uid,
+        'userDocExists': false,
+        'isComplete': false,
+      });
+      
       return false;
     } catch (e) {
-      throw Exception('Failed to check profile setup status: $e');
+      ErrorHandler.logError('check profile setup status', e, additionalInfo: {
+        'uid': uid,
+      });
+      
+      throw ErrorHandler.createException(
+        'Unable to check profile setup status. Please try again.',
+        operation: 'check profile setup status',
+      );
     }
   }
 
@@ -169,8 +260,24 @@ class AuthRepository {
         'interest_tags': interestTags,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      
+      ErrorHandler.logSuccess('update user profile', additionalInfo: {
+        'uid': uid,
+        'bioLength': bio.length,
+        'tagCount': interestTags.length,
+        'tags': interestTags,
+      });
     } catch (e) {
-      throw Exception('Failed to update user profile: $e');
+      ErrorHandler.logError('update user profile', e, additionalInfo: {
+        'uid': uid,
+        'bioLength': bio.length,
+        'tagCount': interestTags.length,
+      });
+      
+      throw ErrorHandler.createException(
+        'Unable to save profile changes. Please try again.',
+        operation: 'update user profile',
+      );
     }
   }
 
@@ -180,10 +287,10 @@ class AuthRepository {
     required String email,
     required String username,
   }) async {
+    // Normalize username for storage
+    final normalizedUsername = username.toLowerCase().trim();
+    
     try {
-      // Normalize username for storage
-      final normalizedUsername = username.toLowerCase().trim();
-      
       await firestore.collection('users').doc(uid).set({
         'email': email,
         'username': normalizedUsername,
@@ -193,78 +300,24 @@ class AuthRepository {
         'interest_tags': [],
       });
       
-      // Log successful creation for debugging
-      print('User document created successfully for UID: $uid, Username: $normalizedUsername');
+      ErrorHandler.logSuccess('create user document', additionalInfo: {
+        'uid': uid,
+        'email': email,
+        'username': normalizedUsername,
+      });
     } catch (e) {
-      print('Failed to create user document for UID: $uid, Error: $e');
-      throw Exception('Failed to create user profile: $e');
+      ErrorHandler.logError('create user document', e, additionalInfo: {
+        'uid': uid,
+        'email': email,
+        'username': normalizedUsername,
+      });
+      
+      throw ErrorHandler.createException(
+        'Unable to create user profile. Please try signing up again.',
+        operation: 'create user profile',
+      );
     }
   }
 
-  /// Handle Firebase Auth exceptions and return user-friendly error messages
-  Exception _handleAuthException(FirebaseAuthException e) {
-    print('Firebase Auth Error - Code: ${e.code}, Message: ${e.message}'); // Debug logging
-    
-    switch (e.code) {
-      // Sign Up Errors
-      case 'weak-password':
-        return Exception('Password is too weak. Please use at least 6 characters with a mix of letters and numbers.');
-      case 'email-already-in-use':
-        return Exception('This email is already registered. Try signing in instead or use a different email.');
-      case 'invalid-email':
-        return Exception('Please enter a valid email address.');
-      case 'operation-not-allowed':
-        return Exception('Email/password sign-up is currently disabled. Please contact support.');
-        
-      // Sign In Errors
-      case 'user-not-found':
-        return Exception('No account found with this email. Please check your email or sign up for a new account.');
-      case 'wrong-password':
-        return Exception('Incorrect password. Please check your password and try again.');
-      case 'invalid-credential':
-        return Exception('Invalid email or password. Please check your credentials and try again.');
-      case 'user-disabled':
-        return Exception('This account has been disabled. Please contact support for assistance.');
-        
-      // Rate limiting
-      case 'too-many-requests':
-        return Exception('Too many failed attempts. Please wait a few minutes before trying again.');
-        
-      // Network issues
-      case 'network-request-failed':
-        return Exception('Network connection problem. Please check your internet connection and try again.');
-        
-      // Verification errors
-      case 'invalid-verification-code':
-        return Exception('The verification code is invalid. Please try again.');
-      case 'invalid-verification-id':
-        return Exception('The verification process failed. Please try again.');
-        
-      // Generic credential errors (covers the recaptcha error you saw)
-      case 'invalid-login-credentials':
-      case 'invalid-credential-error':
-        return Exception('Invalid email or password. Please check your credentials and try again.');
-        
-      // Session/token errors
-      case 'credential-already-in-use':
-        return Exception('This credential is already associated with a different account.');
-      case 'requires-recent-login':
-        return Exception('Please sign in again to complete this action.');
-        
-      // Catch-all for unknown errors
-      default:
-        // Check if the error message contains specific keywords
-        final message = e.message?.toLowerCase() ?? '';
-        
-        if (message.contains('credential') || message.contains('password') || message.contains('incorrect')) {
-          return Exception('Invalid email or password. Please check your credentials and try again.');
-        } else if (message.contains('email')) {
-          return Exception('Email address issue. Please check your email and try again.');
-        } else if (message.contains('network') || message.contains('connection')) {
-          return Exception('Network connection problem. Please check your internet and try again.');
-        } else {
-          return Exception('Sign-in failed. Please check your email and password, then try again.');
-        }
-    }
-  }
+
 } 
