@@ -45,7 +45,9 @@
             JAVA_HOME = jdk17.home;
             FLUTTER_ROOT = flutter;
             DART_ROOT = "${flutter}/bin/cache/dart-sdk";
-            #GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/33.0.2/aapt2";
+            ANDROID_HOME = "/home/batuhan/Android/Sdk";
+            ANDROID_SDK_ROOT = "/home/batuhan/Android/Sdk";
+            ANDROID_AVD_HOME = "/home/batuhan/.config/.android/avd";
             QT_QPA_PLATFORM = "wayland;xcb"; # emulator related: try using wayland, otherwise fall back to X.
             # NB: due to the emulator's bundled qt version, it currently does not start with QT_QPA_PLATFORM="wayland".
             # Maybe one day this will be supported.
