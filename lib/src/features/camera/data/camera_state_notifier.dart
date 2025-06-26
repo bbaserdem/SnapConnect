@@ -3,7 +3,6 @@
 /// This notifier handles camera permissions, flash settings, camera switching,
 /// and provides a reactive interface for camera operations.
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camerawesome/camerawesome_plugin.dart';
@@ -91,7 +90,7 @@ class CameraStateNotifier extends StateNotifier<AppCameraState> {
 
   /// Initialize camera permissions and state
   Future<void> initialize() async {
-            state = state.copyWith(isLoading: true, error: null, sensor: Sensor.position(SensorPosition.back));
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       final hasPermissions = await _cameraRepository.hasCameraPermissions();
@@ -120,6 +119,13 @@ class CameraStateNotifier extends StateNotifier<AppCameraState> {
         error: 'Failed to initialize camera: ${e.toString()}',
       );
     }
+  }
+
+  /// Dispose camera resources
+  @override
+  void dispose() {
+    state = AppCameraState(sensor: Sensor.position(SensorPosition.back));
+    super.dispose();
   }
 
   /// Toggle flash mode

@@ -4,6 +4,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../../common/utils/error_handler.dart';
 import '../../../config/constants.dart';
@@ -25,6 +27,19 @@ class AuthRepository {
     required this.auth,
     required this.firestore,
   });
+
+  /// Check network connectivity
+  Future<bool> _hasNetworkConnectivity() async {
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      return connectivityResult.any((result) => 
+        result != ConnectivityResult.none
+      );
+    } catch (e) {
+      // If connectivity check fails, assume we have connectivity
+      return true;
+    }
+  }
 
   /// Stream of auth state changes
   Stream<User?> authStateChanges() => auth.authStateChanges();
@@ -209,7 +224,17 @@ class AuthRepository {
   /// Check if user has completed profile setup
   Future<bool> hasCompletedProfileSetup(String uid) async {
     try {
-      final userDoc = await getUserDocument(uid);
+      // Add timeout to prevent hanging on network issues
+      final userDoc = await getUserDocument(uid).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw ErrorHandler.createException(
+            'Network timeout - check your connection',
+            operation: 'check profile setup status',
+          );
+        },
+      );
+      
       if (userDoc?.exists == true) {
         final data = userDoc!.data()!;
         final bio = data['bio'] as String?;
@@ -240,6 +265,15 @@ class AuthRepository {
       ErrorHandler.logError('check profile setup status', e, additionalInfo: {
         'uid': uid,
       });
+      
+      // For network/timeout errors, assume profile setup is complete
+      // to prevent blocking user experience
+      if (e.toString().contains('timeout') || 
+          e.toString().contains('network') ||
+          e.toString().contains('resolve host')) {
+        debugPrint('Network issue detected - allowing user to proceed');
+        return true; // Allow user to proceed
+      }
       
       throw ErrorHandler.createException(
         'Unable to check profile setup status. Please try again.',

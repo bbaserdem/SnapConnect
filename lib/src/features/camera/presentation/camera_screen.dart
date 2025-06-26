@@ -9,8 +9,6 @@ import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/constants.dart';
-import '../../../common/widgets/camera_control_button.dart';
-import '../../../common/widgets/camera_filter_button.dart';
 import '../data/camera_state_notifier.dart' as app_camera;
 
 /// Main camera screen widget
@@ -21,72 +19,102 @@ class CameraScreen extends ConsumerStatefulWidget {
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends ConsumerState<CameraScreen> {
+class _CameraScreenState extends ConsumerState<CameraScreen> 
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+  bool _hasInitialized = false;
+  bool _isDisposed = false;
+
+  @override
+  bool get wantKeepAlive => true; // Keep alive to prevent recreation
+
   @override
   void initState() {
     super.initState();
-    // Initialize camera when screen loads
+    WidgetsBinding.instance.addObserver(this);
+    _initializeCamera();
+  }
+
+  /// Initialize camera with proper error handling
+  void _initializeCamera() {
+    if (_hasInitialized || _isDisposed) return;
+    
+    // Initialize camera after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+      if (mounted && !_hasInitialized && !_isDisposed) {
+        _hasInitialized = true;
+        ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+      }
     });
   }
 
   @override
+  void dispose() {
+    _isDisposed = true;
+    WidgetsBinding.instance.removeObserver(this);
+    
+    // Only dispose camera if we actually initialized it
+    if (_hasInitialized) {
+      ref.read(app_camera.cameraStateNotifierProvider.notifier).dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    if (!mounted || !_hasInitialized || _isDisposed) return;
+    
+    // Only handle app lifecycle changes, not tab navigation
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        // Camera will be paused automatically by CamerAwesome
+        break;
+      case AppLifecycleState.resumed:
+        // Camera will be resumed automatically by CamerAwesome
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        // Handle app termination
+        break;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
+    if (_isDisposed) return const SizedBox.shrink();
+    
     final theme = Theme.of(context);
     final cameraState = ref.watch(app_camera.cameraStateNotifierProvider);
-    final flashIcon = ref.watch(app_camera.flashIconProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Camera preview or loading/error state
-          if (cameraState.hasPermissions && cameraState.isInitialized)
-            _buildCameraPreview(cameraState)
-          else if (cameraState.isLoading)
-            _buildLoadingView()
-          else if (cameraState.error != null)
-            _buildErrorView(cameraState.error!, theme)
-          else
-            _buildPermissionView(theme),
-          
-          // Top overlay controls
-          Positioned(
-            top: MediaQuery.of(context).padding.top + UIDimensions.mediumSpacing,
-            left: UIDimensions.mediumSpacing,
-            right: UIDimensions.mediumSpacing,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CameraControlButton(
-                  icon: flashIcon,
-                  onPressed: () {
-                    ref.read(app_camera.cameraStateNotifierProvider.notifier).toggleFlash();
-                  },
-                ),
-                CameraControlButton(
-                  icon: Icons.settings,
-                  onPressed: () {
-                    // TODO: Open camera settings
-                    _showSettingsDialog(context);
-                  },
-                ),
-              ],
-            ),
-          ),
-          
-          // Bottom controls
-          if (cameraState.hasPermissions && cameraState.isInitialized)
-            Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + UIDimensions.extraLargeSpacing,
-              left: 0,
-              right: 0,
-              child: _buildBottomControls(cameraState),
-            ),
-        ],
-      ),
+      body: _buildCameraBody(cameraState, theme),
     );
+  }
+
+  /// Build camera body with proper state management
+  Widget _buildCameraBody(app_camera.AppCameraState cameraState, ThemeData theme) {
+    // Show camera preview when properly initialized
+    if (cameraState.hasPermissions && cameraState.isInitialized && !_isDisposed) {
+      return _buildCameraPreview(cameraState);
+    }
+    
+    // Show loading state
+    if (cameraState.isLoading) {
+      return _buildLoadingView();
+    }
+    
+    // Show error state
+    if (cameraState.error != null) {
+      return _buildErrorView(cameraState.error!, theme);
+    }
+    
+    // Show permission request
+    return _buildPermissionView(theme);
   }
 
   /// Build the camera preview using CamerAwesome
@@ -101,20 +129,21 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         aspectRatio: cameraState.cameraAspectRatio,
       ),
       enablePhysicalButton: true,
-      onMediaTap: (mediaCapture) {
-        // Navigate to edit screen after capture
-        _navigateToEditScreen(mediaCapture);
+      onMediaCaptureEvent: (event) {
+        // Handle media capture events
+        if (event.status == MediaCaptureStatus.success && mounted) {
+          // Navigate to edit screen
+          context.push('/snap-edit', extra: event);
+        }
       },
     );
   }
 
   /// Build loading view
   Widget _buildLoadingView() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
+    return const ColoredBox(
       color: Colors.black,
-      child: const Center(
+      child: Center(
         child: CircularProgressIndicator(
           color: Colors.white,
         ),
@@ -124,9 +153,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   /// Build error view
   Widget _buildErrorView(String error, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
+    return ColoredBox(
       color: Colors.black,
       child: Center(
         child: Padding(
@@ -158,7 +185,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+                  if (mounted && !_isDisposed) {
+                    ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+                  }
                 },
                 child: const Text('Retry'),
               ),
@@ -171,9 +200,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   /// Build permission request view
   Widget _buildPermissionView(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
+    return ColoredBox(
       color: Colors.black,
       child: Center(
         child: Padding(
@@ -205,120 +232,15 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+                  if (mounted && !_isDisposed) {
+                    ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+                  }
                 },
                 child: const Text('Grant Permission'),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Build bottom controls section
-  Widget _buildBottomControls(app_camera.AppCameraState cameraState) {
-    return Column(
-      children: [
-        // Filter options placeholder
-        SizedBox(
-          height: UIDimensions.filterItemHeight,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: UIDimensions.mediumSpacing),
-            itemCount: AppConstants.cameraFilterCount,
-            itemBuilder: (context, index) {
-              return CameraFilterButton(
-                filterName: 'F${index + 1}',
-                onTap: () {
-                  // TODO: Apply filter in future phase
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Filter ${index + 1} - Coming soon'),
-                      duration: AnimationDurations.snackbar,
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        
-        const SizedBox(height: UIDimensions.largeSpacing),
-        
-        // Main capture controls
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            // Gallery button
-            CameraControlButton(
-              icon: Icons.photo_library,
-              onPressed: () {
-                // TODO: Open gallery/recent captures
-                _showRecentCaptures(context);
-              },
-            ),
-            
-            // Main capture button
-            CameraCaptureButton(
-              onTap: () {
-                // This will be handled by CamerAwesome's onMediaTap
-              },
-              onLongPress: () {
-                // Switch to video mode for long press
-                ref.read(app_camera.cameraStateNotifierProvider.notifier).toggleCaptureMode();
-              },
-            ),
-            
-            // Switch camera button
-            CameraControlButton(
-              icon: Icons.flip_camera_ios,
-              onPressed: () {
-                ref.read(app_camera.cameraStateNotifierProvider.notifier).switchCamera();
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// Navigate to edit screen after capture
-  void _navigateToEditScreen(MediaCapture mediaCapture) {
-    // TODO: Navigate to edit screen with captured media
-    context.push('/snap-edit', extra: mediaCapture);
-  }
-
-  /// Show camera settings dialog
-  void _showSettingsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Camera Settings'),
-        content: const Text('Camera settings will be available in a future update.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Show recent captures dialog
-  void _showRecentCaptures(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Recent Captures'),
-        content: const Text('Gallery feature will be available in a future update.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }

@@ -7,7 +7,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:camerawesome/camerawesome_plugin.dart';
+
 import 'package:video_player/video_player.dart';
 
 import '../../../config/constants.dart';
@@ -19,7 +19,7 @@ class SnapEditScreen extends ConsumerStatefulWidget {
     super.key,
   });
 
-  final MediaCapture mediaCapture;
+  final dynamic mediaCapture; // This will be the event from onMediaCaptureEvent
 
   @override
   ConsumerState<SnapEditScreen> createState() => _SnapEditScreenState();

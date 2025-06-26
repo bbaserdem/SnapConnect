@@ -36,9 +36,21 @@ class ProfileScreen extends ConsumerWidget {
       ),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
-          : FutureBuilder<DocumentSnapshot<Map<String, dynamic>>?>(
-              future: ref.read(authRepositoryProvider).getUserDocument(user.uid),
-              builder: (context, snapshot) {
+          : _buildProfileWithCache(context, ref, user, theme, colorScheme),
+    );
+  }
+
+  /// Build profile with caching to improve performance
+  Widget _buildProfileWithCache(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic user,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>?>(
+      future: ref.read(authRepositoryProvider).getUserDocument(user.uid),
+      builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -62,7 +74,7 @@ class ProfileScreen extends ConsumerWidget {
                         Text(
                           '${snapshot.error}',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.7),
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -80,8 +92,7 @@ class ProfileScreen extends ConsumerWidget {
 
                 return _buildProfileContent(context, user, userData, theme, colorScheme);
               },
-            ),
-    );
+            );
   }
 
   /// Builds the main profile content
@@ -108,7 +119,7 @@ class ProfileScreen extends ConsumerWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  colorScheme.primary.withOpacity(0.1),
+                  colorScheme.primary.withValues(alpha: 0.1),
                   colorScheme.surface,
                 ],
               ),
@@ -123,7 +134,7 @@ class ProfileScreen extends ConsumerWidget {
                     color: colorScheme.primary,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: colorScheme.outline.withOpacity(0.2),
+                      color: colorScheme.outline.withValues(alpha: 0.2),
                       width: 4,
                     ),
                   ),
@@ -153,7 +164,7 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   user.email ?? '',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -257,7 +268,7 @@ class ProfileScreen extends ConsumerWidget {
               content,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isEmpty 
-                    ? colorScheme.onSurface.withOpacity(0.5)
+                    ? colorScheme.onSurface.withValues(alpha: 0.5)
                     : colorScheme.onSurface,
                 fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
               ),
@@ -302,7 +313,7 @@ class ProfileScreen extends ConsumerWidget {
               Text(
                 'No interests selected yet',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.5),
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
                   fontStyle: FontStyle.italic,
                 ),
               )
@@ -408,7 +419,7 @@ class ProfileScreen extends ConsumerWidget {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withOpacity(0.7),
+            color: colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ],

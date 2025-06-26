@@ -6,7 +6,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:camerawesome/camerawesome_plugin.dart';
 
 import '../features/auth/auth.dart';
 import '../features/camera/presentation/camera_screen.dart';
@@ -17,6 +16,9 @@ import '../features/messages/presentation/messages_screen.dart';
 import '../features/stories/presentation/stories_screen.dart';
 import 'navigation_shell.dart';
 
+/// Cache for profile setup status to avoid repeated Firebase calls
+final Map<String, bool> _profileSetupCache = {};
+
 /// Router configuration provider for the application
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authUserProvider);
@@ -24,12 +26,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/',
-    redirect: (context, state) async {
-      // Get the current auth state
+    redirect: (context, state) {
+      // Get the current auth state synchronously
       final user = authState.valueOrNull;
       final isLoggedIn = user != null;
-
-      // Get the current location
       final currentLocation = state.matchedLocation;
 
       // Define auth routes that should be accessible only when logged out
@@ -38,38 +38,71 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Define routes that don't require redirect checks
       final isProfileSetupRoute = currentLocation == '/profile-setup';
+      final isSnapEditRoute = currentLocation == '/snap-edit';
 
       // If not logged in and trying to access protected route, redirect to sign in
       if (!isLoggedIn && !isAuthRoute) {
         return '/signin';
       }
 
-      // If logged in and trying to access auth route, redirect based on profile status
+      // If logged in and trying to access auth route, redirect to main app
       if (isLoggedIn && isAuthRoute) {
-        // Check if user has completed profile setup
-        try {
-          final hasCompletedSetup = await authRepository.hasCompletedProfileSetup(user.uid);
-          return hasCompletedSetup ? '/' : '/profile-setup';
-        } catch (e) {
-          // If there's an error checking profile status, assume profile setup is needed
-          return '/profile-setup';
-        }
+        return '/';
       }
 
-      // If logged in and not on profile setup route, check if profile setup is complete
+      // Skip profile setup checks for snap edit route
+      if (isSnapEditRoute) {
+        return null;
+      }
+
+      // For logged in users, check profile setup status using cache
       if (isLoggedIn && !isProfileSetupRoute) {
-        try {
-          final hasCompletedSetup = await authRepository.hasCompletedProfileSetup(user.uid);
+        final uid = user.uid;
+        
+        // Check cache first
+        if (_profileSetupCache.containsKey(uid)) {
+          final hasCompletedSetup = _profileSetupCache[uid]!;
           if (!hasCompletedSetup) {
             return '/profile-setup';
           }
-        } catch (e) {
-          // If there's an error checking profile status, redirect to profile setup
-          return '/profile-setup';
+        } else {
+          // Schedule async check but don't block navigation
+          Future.microtask(() async {
+            try {
+              final hasCompletedSetup = await authRepository.hasCompletedProfileSetup(uid);
+              _profileSetupCache[uid] = hasCompletedSetup;
+              
+              // If setup is not complete and user is not already on profile setup,
+              // navigate to profile setup
+              if (!hasCompletedSetup && currentLocation != '/profile-setup') {
+                // Use the router to navigate asynchronously
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (context.mounted) {
+                    context.go('/profile-setup');
+                  }
+                });
+              }
+            } catch (e) {
+              // On error, assume profile setup is needed
+              _profileSetupCache[uid] = false;
+              if (currentLocation != '/profile-setup') {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (context.mounted) {
+                    context.go('/profile-setup');
+                  }
+                });
+              }
+            }
+          });
         }
       }
 
-      // No redirect needed
+      // Clear cache when user logs out
+      if (!isLoggedIn) {
+        _profileSetupCache.clear();
+      }
+
+      // No redirect needed - let navigation proceed
       return null;
     },
     routes: [
@@ -93,7 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/snap-edit',
         name: 'snap-edit',
         builder: (context, state) => SnapEditScreen(
-          mediaCapture: state.extra as MediaCapture,
+          mediaCapture: state.extra,
         ),
       ),
 

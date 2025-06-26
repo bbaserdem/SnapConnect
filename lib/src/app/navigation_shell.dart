@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../common/widgets/debug_info_banner.dart';
+
 /// Navigation shell widget that provides the bottom navigation bar
 class NavigationShell extends StatelessWidget {
   /// Creates a navigation shell widget
@@ -23,10 +25,16 @@ class NavigationShell extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          const DebugInfoBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
+          // Navigate directly without delay to prevent navigation issues
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,
@@ -35,7 +43,7 @@ class NavigationShell extends StatelessWidget {
         backgroundColor: colorScheme.surface,
         indicatorColor: colorScheme.primaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        destinations: [
+        destinations: const [
           NavigationDestination(
             icon: Icon(
               Icons.camera_alt_outlined,
