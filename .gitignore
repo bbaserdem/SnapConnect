@@ -103,8 +103,9 @@ coverage/
 **/android/app/google-services.json
 **/ios/firebase_app_id_file.json
 
-# Environment variables
+# Environment variables, and where we install the sdk platform
 .env*local
+.sdk
 
 # Nix related
 .direnv/

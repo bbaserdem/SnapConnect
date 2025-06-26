@@ -2,8 +2,9 @@
     <!-- Camera and Microphone permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
+    <!-- Note: Storage permissions removed as they're deprecated in Android 14+ (API 34+)
+         and not needed since we use app-specific storage via getApplicationDocumentsDirectory() -->
     
     <application
         android:label="snapconnect"
