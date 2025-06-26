@@ -19,32 +19,6 @@
           config.allowUnfree = true;
           android_sdk.accept_license = true;
         };
-        androidEnv = pkgs.androidenv.override {licenseAccepted = true;};
-        androidComposition = androidEnv.composeAndroidPackages {
-          cmdLineToolsVersion = "8.0";
-          platformToolsVersion = "34.0.4";
-          buildToolsVersions = ["33.0.2" "34.0.0" "35.0.0" "36.0.0"];
-          platformVersions = ["33" "34" "35" "36"];
-          abiVersions = ["armeabi-v7a" "arm64-v8a" "x86_64"];
-          includeNDK = true;
-          ndkVersions = ["27.0.12077973"];
-          cmakeVersions = ["3.22.1"];
-          includeSystemImages = true;
-          systemImageTypes = ["google_apis" "google_apis_playstore"];
-          includeEmulator = true;
-          useGoogleAPIs = true;
-          extraLicenses = [
-            "android-googletv-license"
-            "android-sdk-arm-dbt-license"
-            "android-sdk-license"
-            "android-sdk-preview-license"
-            "google-gdk-license"
-            "intel-android-extra-license"
-            "intel-android-sysimage-license"
-            "mips-android-sysimage-license"
-          ];
-        };
-        androidSdk = androidComposition.androidsdk;
         devPython = pkgs.python313.withPackages (python-pkgs:
           with python-pkgs; [
             # Pinecone packages
@@ -68,12 +42,10 @@
       in {
         devShell = with pkgs;
           mkShell rec {
-            ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
-            ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
             JAVA_HOME = jdk17.home;
             FLUTTER_ROOT = flutter;
             DART_ROOT = "${flutter}/bin/cache/dart-sdk";
-            GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/33.0.2/aapt2";
+            #GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/33.0.2/aapt2";
             QT_QPA_PLATFORM = "wayland;xcb"; # emulator related: try using wayland, otherwise fall back to X.
             # NB: due to the emulator's bundled qt version, it currently does not start with QT_QPA_PLATFORM="wayland".
             # Maybe one day this will be supported.
@@ -93,7 +65,7 @@
               pkg-config
               # Custom environments
               devPython
-              androidSdk
+              android-studio
             ];
             # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
             LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [vulkan-loader libGL]}";
