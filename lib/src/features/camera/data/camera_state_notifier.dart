@@ -1,7 +1,7 @@
-/// Camera state notifier for managing camera operations and state.
-/// 
-/// This notifier handles camera permissions, flash settings, camera switching,
-/// and provides a reactive interface for camera operations.
+// Camera state notifier for managing camera operations and state.
+//
+// This notifier handles camera permissions, flash settings, camera switching,
+// and provides a reactive interface for camera operations.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,7 +84,8 @@ class AppCameraState {
 
 /// Camera state notifier
 class CameraStateNotifier extends StateNotifier<AppCameraState> {
-  CameraStateNotifier(this._cameraRepository) : super(AppCameraState(sensor: Sensor.position(SensorPosition.back)));
+  CameraStateNotifier(this._cameraRepository)
+    : super(AppCameraState(sensor: Sensor.position(SensorPosition.back)));
 
   final CameraRepository _cameraRepository;
 
@@ -94,7 +95,7 @@ class CameraStateNotifier extends StateNotifier<AppCameraState> {
 
     try {
       final hasPermissions = await _cameraRepository.hasCameraPermissions();
-      
+
       if (!hasPermissions) {
         final granted = await _cameraRepository.requestCameraPermissions();
         if (!granted) {
@@ -136,22 +137,22 @@ class CameraStateNotifier extends StateNotifier<AppCameraState> {
       FlashMode.auto => FlashMode.none,
       _ => FlashMode.none,
     };
-    
+
     state = state.copyWith(flashMode: newFlashMode);
   }
 
   /// Switch between front and back camera
   void switchCamera() {
-    final newSensor = state.sensor.position == SensorPosition.back 
-        ? Sensor.position(SensorPosition.front) 
+    final newSensor = state.sensor.position == SensorPosition.back
+        ? Sensor.position(SensorPosition.front)
         : Sensor.position(SensorPosition.back);
     state = state.copyWith(sensor: newSensor);
   }
 
   /// Toggle between photo and video capture mode
   void toggleCaptureMode() {
-    final newMode = state.captureMode == CaptureMode.photo 
-        ? CaptureMode.video 
+    final newMode = state.captureMode == CaptureMode.photo
+        ? CaptureMode.video
         : CaptureMode.photo;
     state = state.copyWith(captureMode: newMode);
   }
@@ -168,16 +169,18 @@ class CameraStateNotifier extends StateNotifier<AppCameraState> {
 }
 
 /// Camera state notifier provider
-final cameraStateNotifierProvider = 
+final cameraStateNotifierProvider =
     StateNotifierProvider<CameraStateNotifier, AppCameraState>((ref) {
-  final cameraRepository = ref.watch(cameraRepositoryProvider);
-  return CameraStateNotifier(cameraRepository);
-});
+      final cameraRepository = ref.watch(cameraRepositoryProvider);
+      return CameraStateNotifier(cameraRepository);
+    });
 
 /// Helper provider to get flash icon based on current flash mode
 final flashIconProvider = Provider<IconData>((ref) {
-  final flashMode = ref.watch(cameraStateNotifierProvider.select((state) => state.flashMode));
-  
+  final flashMode = ref.watch(
+    cameraStateNotifierProvider.select((state) => state.flashMode),
+  );
+
   return switch (flashMode) {
     FlashMode.none => Icons.flash_off,
     FlashMode.on => Icons.flash_on,
@@ -188,6 +191,10 @@ final flashIconProvider = Provider<IconData>((ref) {
 
 /// Helper provider to get camera icon based on current sensor
 final cameraIconProvider = Provider<IconData>((ref) {
-  final sensor = ref.watch(cameraStateNotifierProvider.select((state) => state.sensor));
-  return sensor.position == SensorPosition.back ? Icons.camera_rear : Icons.camera_front;
-}); 
+  final sensor = ref.watch(
+    cameraStateNotifierProvider.select((state) => state.sensor),
+  );
+  return sensor.position == SensorPosition.back
+      ? Icons.camera_rear
+      : Icons.camera_front;
+});

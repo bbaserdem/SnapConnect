@@ -1,7 +1,7 @@
-/// Camera repository for handling camera operations and permissions.
-/// 
-/// This repository encapsulates camera-related business logic including
-/// permission management, file storage, and media capture operations.
+// Camera repository for handling camera operations and permissions.
+//
+// This repository encapsulates camera-related business logic including
+// permission management, file storage, and media capture operations.
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -21,7 +21,7 @@ class CameraRepository {
     try {
       final cameraStatus = await Permission.camera.request();
       final microphoneStatus = await Permission.microphone.request();
-      
+
       return cameraStatus.isGranted && microphoneStatus.isGranted;
     } catch (e) {
       debugPrint('Error requesting camera permissions: $e');
@@ -34,7 +34,7 @@ class CameraRepository {
     try {
       final cameraStatus = await Permission.camera.status;
       final microphoneStatus = await Permission.microphone.status;
-      
+
       return cameraStatus.isGranted && microphoneStatus.isGranted;
     } catch (e) {
       debugPrint('Error checking camera permissions: $e');
@@ -47,11 +47,11 @@ class CameraRepository {
     try {
       final Directory appDocDir = await getApplicationDocumentsDirectory();
       final Directory mediaDir = Directory('${appDocDir.path}/media');
-      
+
       if (!await mediaDir.exists()) {
         await mediaDir.create(recursive: true);
       }
-      
+
       return mediaDir;
     } catch (e) {
       debugPrint('Error creating media directory: $e');
@@ -72,7 +72,7 @@ class CameraRepository {
       final mediaDir = await getMediaDirectory();
       final fileName = generateFileName(isVideo: false);
       final file = File('${mediaDir.path}/$fileName');
-      
+
       await file.writeAsBytes(photoData);
       return file.path;
     } catch (e) {
@@ -88,7 +88,7 @@ class CameraRepository {
       final fileName = generateFileName(isVideo: true);
       final sourceFile = File(videoPath);
       final targetFile = File('${mediaDir.path}/$fileName');
-      
+
       await sourceFile.copy(targetFile.path);
       return targetFile.path;
     } catch (e) {
@@ -114,18 +114,18 @@ class CameraRepository {
     try {
       final mediaDir = await getMediaDirectory();
       final files = await mediaDir.list().toList();
-      
+
       // Sort by creation time (newest first)
       files.sort((a, b) {
         final aStat = a.statSync();
         final bStat = b.statSync();
         return bStat.modified.compareTo(aStat.modified);
       });
-      
+
       return files;
     } catch (e) {
       debugPrint('Error getting saved media: $e');
       return [];
     }
   }
-} 
+}

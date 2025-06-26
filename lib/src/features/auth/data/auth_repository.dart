@@ -1,11 +1,10 @@
-/// Authentication repository that handles all authentication-related operations
-/// using Firebase Authentication and Firestore for user data management.
+// Authentication repository that handles all authentication-related operations
+// using Firebase Authentication and Firestore for user data management.
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../../common/utils/error_handler.dart';
 import '../../../config/constants.dart';
@@ -23,23 +22,7 @@ class AuthRepository {
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
 
-  AuthRepository({
-    required this.auth,
-    required this.firestore,
-  });
-
-  /// Check network connectivity
-  Future<bool> _hasNetworkConnectivity() async {
-    try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult.any((result) => 
-        result != ConnectivityResult.none
-      );
-    } catch (e) {
-      // If connectivity check fails, assume we have connectivity
-      return true;
-    }
-  }
+  AuthRepository({required this.auth, required this.firestore});
 
   /// Stream of auth state changes
   Stream<User?> authStateChanges() => auth.authStateChanges();
@@ -49,40 +32,43 @@ class AuthRepository {
     try {
       // Normalize username to lowercase and trim whitespace
       final normalizedUsername = username.toLowerCase().trim();
-      
+
       // Additional validation on the backend
-      if (normalizedUsername.length < AppConstants.minUsernameLength || 
+      if (normalizedUsername.length < AppConstants.minUsernameLength ||
           normalizedUsername.length > AppConstants.maxUsernameLength) {
         throw ErrorHandler.createException(
           'Username must be between ${AppConstants.minUsernameLength} and ${AppConstants.maxUsernameLength} characters',
           operation: 'validate username',
         );
       }
-      
+
       if (!RegExp(r'^[a-z0-9_]+$').hasMatch(normalizedUsername)) {
         throw ErrorHandler.createException(
           'Username can only contain lowercase letters, numbers, and underscores',
           operation: 'validate username format',
         );
       }
-      
+
       final querySnapshot = await firestore
           .collection('users')
           .where('username', isEqualTo: normalizedUsername)
           .limit(1)
           .get();
-      
+
       return querySnapshot.docs.isEmpty;
     } catch (e) {
       // Re-throw with more context if it's our validation error
-      if (e.toString().contains('Username') || e.toString().contains('validate username')) {
+      if (e.toString().contains('Username') ||
+          e.toString().contains('validate username')) {
         rethrow;
       }
-      
-      ErrorHandler.logError('check username availability', e, additionalInfo: {
-        'username': username,
-      });
-      
+
+      ErrorHandler.logError(
+        'check username availability',
+        e,
+        additionalInfo: {'username': username},
+      );
+
       throw ErrorHandler.createException(
         'Unable to verify username availability. Please try again.',
         operation: 'check username availability',
@@ -105,7 +91,8 @@ class AuthRepository {
 
       // First, verify reCAPTCHA
       await auth.setSettings(
-        appVerificationDisabledForTesting: false, // Set to true only for testing
+        appVerificationDisabledForTesting:
+            false, // Set to true only for testing
       );
 
       // Create the user with email and password
@@ -121,12 +108,15 @@ class AuthRepository {
           email: email,
           username: username, // _createUserDocument will normalize it
         );
-        
-        ErrorHandler.logSuccess('user sign up', additionalInfo: {
-          'uid': userCredential.user!.uid,
-          'email': email,
-          'username': username,
-        });
+
+        ErrorHandler.logSuccess(
+          'user sign up',
+          additionalInfo: {
+            'uid': userCredential.user!.uid,
+            'email': email,
+            'username': username,
+          },
+        );
       } else {
         throw ErrorHandler.createException(
           'Authentication succeeded but user account was not created properly',
@@ -136,22 +126,25 @@ class AuthRepository {
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      ErrorHandler.logError('sign up with email and password', e, additionalInfo: {
-        'email': email,
-        'username': username,
-      });
+      ErrorHandler.logError(
+        'sign up with email and password',
+        e,
+        additionalInfo: {'email': email, 'username': username},
+      );
       throw Exception(ErrorHandler.handleFirebaseAuthException(e));
     } catch (e) {
       // Catch any other errors and ensure proper error handling
-      if (e.toString().contains('Username') || e.toString().contains('validate username')) {
+      if (e.toString().contains('Username') ||
+          e.toString().contains('validate username')) {
         rethrow;
       }
-      
-      ErrorHandler.logError('sign up process', e, additionalInfo: {
-        'email': email,
-        'username': username,
-      });
-      
+
+      ErrorHandler.logError(
+        'sign up process',
+        e,
+        additionalInfo: {'email': email, 'username': username},
+      );
+
       if (e is Exception) {
         throw Exception(ErrorHandler.handleGeneralException(e));
       } else {
@@ -171,24 +164,27 @@ class AuthRepository {
     try {
       // First, verify reCAPTCHA
       await auth.setSettings(
-        appVerificationDisabledForTesting: false, // Set to true only for testing
+        appVerificationDisabledForTesting:
+            false, // Set to true only for testing
       );
 
       final userCredential = await auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
-      ErrorHandler.logSuccess('user sign in', additionalInfo: {
-        'uid': userCredential.user?.uid,
-        'email': email,
-      });
-      
+
+      ErrorHandler.logSuccess(
+        'user sign in',
+        additionalInfo: {'uid': userCredential.user?.uid, 'email': email},
+      );
+
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      ErrorHandler.logError('sign in with email and password', e, additionalInfo: {
-        'email': email,
-      });
+      ErrorHandler.logError(
+        'sign in with email and password',
+        e,
+        additionalInfo: {'email': email},
+      );
       throw Exception(ErrorHandler.handleFirebaseAuthException(e));
     }
   }
@@ -199,21 +195,25 @@ class AuthRepository {
   }
 
   /// Get user document from Firestore
-  Future<DocumentSnapshot<Map<String, dynamic>>?> getUserDocument(String uid) async {
+  Future<DocumentSnapshot<Map<String, dynamic>>?> getUserDocument(
+    String uid,
+  ) async {
     try {
       final document = await firestore.collection('users').doc(uid).get();
-      
-      ErrorHandler.logSuccess('get user document', additionalInfo: {
-        'uid': uid,
-        'exists': document.exists,
-      });
-      
+
+      ErrorHandler.logSuccess(
+        'get user document',
+        additionalInfo: {'uid': uid, 'exists': document.exists},
+      );
+
       return document;
     } catch (e) {
-      ErrorHandler.logError('get user document', e, additionalInfo: {
-        'uid': uid,
-      });
-      
+      ErrorHandler.logError(
+        'get user document',
+        e,
+        additionalInfo: {'uid': uid},
+      );
+
       throw ErrorHandler.createException(
         'Unable to retrieve user profile. Please try again.',
         operation: 'get user document',
@@ -234,47 +234,58 @@ class AuthRepository {
           );
         },
       );
-      
+
       if (userDoc?.exists == true) {
         final data = userDoc!.data()!;
         final bio = data['bio'] as String?;
         final interestTags = data['interest_tags'] as List?;
-        
+
         // Profile is complete if user has both bio and interest tags
-        final isComplete = bio != null && bio.isNotEmpty && 
-                          interestTags != null && interestTags.isNotEmpty;
-        
-        ErrorHandler.logSuccess('check profile setup status', additionalInfo: {
-          'uid': uid,
-          'isComplete': isComplete,
-          'hasBio': bio != null && bio.isNotEmpty,
-          'hasInterestTags': interestTags != null && interestTags.isNotEmpty,
-        });
-        
+        final isComplete =
+            bio != null &&
+            bio.isNotEmpty &&
+            interestTags != null &&
+            interestTags.isNotEmpty;
+
+        ErrorHandler.logSuccess(
+          'check profile setup status',
+          additionalInfo: {
+            'uid': uid,
+            'isComplete': isComplete,
+            'hasBio': bio != null && bio.isNotEmpty,
+            'hasInterestTags': interestTags != null && interestTags.isNotEmpty,
+          },
+        );
+
         return isComplete;
       }
-      
-      ErrorHandler.logSuccess('check profile setup status', additionalInfo: {
-        'uid': uid,
-        'userDocExists': false,
-        'isComplete': false,
-      });
-      
+
+      ErrorHandler.logSuccess(
+        'check profile setup status',
+        additionalInfo: {
+          'uid': uid,
+          'userDocExists': false,
+          'isComplete': false,
+        },
+      );
+
       return false;
     } catch (e) {
-      ErrorHandler.logError('check profile setup status', e, additionalInfo: {
-        'uid': uid,
-      });
-      
+      ErrorHandler.logError(
+        'check profile setup status',
+        e,
+        additionalInfo: {'uid': uid},
+      );
+
       // For network/timeout errors, assume profile setup is complete
       // to prevent blocking user experience
-      if (e.toString().contains('timeout') || 
+      if (e.toString().contains('timeout') ||
           e.toString().contains('network') ||
           e.toString().contains('resolve host')) {
         debugPrint('Network issue detected - allowing user to proceed');
         return true; // Allow user to proceed
       }
-      
+
       throw ErrorHandler.createException(
         'Unable to check profile setup status. Please try again.',
         operation: 'check profile setup status',
@@ -294,20 +305,27 @@ class AuthRepository {
         'interest_tags': interestTags,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      
-      ErrorHandler.logSuccess('update user profile', additionalInfo: {
-        'uid': uid,
-        'bioLength': bio.length,
-        'tagCount': interestTags.length,
-        'tags': interestTags,
-      });
+
+      ErrorHandler.logSuccess(
+        'update user profile',
+        additionalInfo: {
+          'uid': uid,
+          'bioLength': bio.length,
+          'tagCount': interestTags.length,
+          'tags': interestTags,
+        },
+      );
     } catch (e) {
-      ErrorHandler.logError('update user profile', e, additionalInfo: {
-        'uid': uid,
-        'bioLength': bio.length,
-        'tagCount': interestTags.length,
-      });
-      
+      ErrorHandler.logError(
+        'update user profile',
+        e,
+        additionalInfo: {
+          'uid': uid,
+          'bioLength': bio.length,
+          'tagCount': interestTags.length,
+        },
+      );
+
       throw ErrorHandler.createException(
         'Unable to save profile changes. Please try again.',
         operation: 'update user profile',
@@ -323,7 +341,7 @@ class AuthRepository {
   }) async {
     // Normalize username for storage
     final normalizedUsername = username.toLowerCase().trim();
-    
+
     try {
       await firestore.collection('users').doc(uid).set({
         'email': email,
@@ -333,25 +351,30 @@ class AuthRepository {
         'bio': '',
         'interest_tags': [],
       });
-      
-      ErrorHandler.logSuccess('create user document', additionalInfo: {
-        'uid': uid,
-        'email': email,
-        'username': normalizedUsername,
-      });
+
+      ErrorHandler.logSuccess(
+        'create user document',
+        additionalInfo: {
+          'uid': uid,
+          'email': email,
+          'username': normalizedUsername,
+        },
+      );
     } catch (e) {
-      ErrorHandler.logError('create user document', e, additionalInfo: {
-        'uid': uid,
-        'email': email,
-        'username': normalizedUsername,
-      });
-      
+      ErrorHandler.logError(
+        'create user document',
+        e,
+        additionalInfo: {
+          'uid': uid,
+          'email': email,
+          'username': normalizedUsername,
+        },
+      );
+
       throw ErrorHandler.createException(
         'Unable to create user profile. Please try signing up again.',
         operation: 'create user profile',
       );
     }
   }
-
-
-} 
+}

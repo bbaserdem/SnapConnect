@@ -1,5 +1,5 @@
-/// Sign up screen that allows users to create a new account
-/// This screen handles form validation and displays error messages
+// Sign up screen that allows users to create a new account
+// This screen handles form validation and displays error messages
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +22,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _isUsernameChecking = false;
   bool _isUsernameAvailable = true;
   String? _usernameError;
-  
+
   // Track the current username being checked to prevent race conditions
   String? _currentUsernameCheck;
 
@@ -43,7 +43,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       setState(() {
         _isUsernameChecking = false;
         _isUsernameAvailable = false;
-        _usernameError = 'Username can only contain letters, numbers, and underscores';
+        _usernameError =
+            'Username can only contain letters, numbers, and underscores';
       });
       return;
     }
@@ -59,8 +60,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     try {
       final authRepository = ref.read(authRepositoryProvider);
-      final isAvailable = await authRepository.isUsernameAvailable(normalizedUsername);
-      
+      final isAvailable = await authRepository.isUsernameAvailable(
+        normalizedUsername,
+      );
+
       // Only update state if this is still the current username being checked
       if (mounted && _currentUsernameCheck == normalizedUsername) {
         setState(() {
@@ -75,7 +78,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         setState(() {
           _isUsernameChecking = false;
           _isUsernameAvailable = false;
-          _usernameError = 'Failed to check username availability: ${e.toString()}';
+          _usernameError =
+              'Failed to check username availability: ${e.toString()}';
         });
       }
     }
@@ -83,7 +87,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_isUsernameChecking) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -93,7 +97,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       );
       return;
     }
-    
+
     if (!_isUsernameAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -105,12 +109,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
 
     try {
-      await ref.read(authStateNotifierProvider.notifier).signUp(
+      await ref
+          .read(authStateNotifierProvider.notifier)
+          .signUp(
             email: _emailController.text.trim(),
             password: _passwordController.text,
             username: _usernameController.text.trim(),
           );
-      
+
       if (mounted) {
         // Success message will be shown, routing handled by router
         ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +125,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Account created successfully! Please complete your profile.'),
+                Text(
+                  'Account created successfully! Please complete your profile.',
+                ),
               ],
             ),
             backgroundColor: Colors.green,
@@ -130,7 +138,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     } catch (e) {
       if (mounted) {
         final errorMessage = e.toString().replaceAll('Exception: ', '');
-        
+
         // Show user-friendly error dialog
         showDialog(
           context: context,
@@ -148,21 +156,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               children: [
                 Text(errorMessage),
                 const SizedBox(height: 16),
-                if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('already'))
+                if (errorMessage.toLowerCase().contains('email') &&
+                    errorMessage.contains('already'))
                   const Text(
                     '💡 Already have an account? Try signing in instead.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                   ),
-                if (errorMessage.toLowerCase().contains('password') && errorMessage.contains('weak'))
+                if (errorMessage.toLowerCase().contains('password') &&
+                    errorMessage.contains('weak'))
                   const Text(
                     '💡 Try using a mix of uppercase, lowercase, numbers, and symbols.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                   ),
               ],
             ),
@@ -171,7 +175,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('OK'),
               ),
-              if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('already'))
+              if (errorMessage.toLowerCase().contains('email') &&
+                  errorMessage.contains('already'))
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -191,9 +196,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final authState = ref.watch(authStateNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -215,16 +218,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Join SnapConnect',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Connect with the body modification community',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -232,9 +236,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Email field
               TextFormField(
                 controller: _emailController,
@@ -249,15 +253,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Username field
               TextFormField(
                 controller: _usernameController,
@@ -275,11 +281,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           ),
                         )
                       : _usernameController.text.length >= 3
-                          ? Icon(
-                              _isUsernameAvailable ? Icons.check_circle : Icons.error,
-                              color: _isUsernameAvailable ? Colors.green : Colors.red,
-                            )
-                          : null,
+                      ? Icon(
+                          _isUsernameAvailable
+                              ? Icons.check_circle
+                              : Icons.error,
+                          color: _isUsernameAvailable
+                              ? Colors.green
+                              : Colors.red,
+                        )
+                      : null,
                   errorText: _usernameError,
                 ),
                 onChanged: (value) {
@@ -319,9 +329,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Password field
               TextFormField(
                 controller: _passwordController,
@@ -342,9 +352,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Sign up button
               FilledButton(
                 onPressed: authState.isLoading ? null : _handleSignUp,
@@ -362,22 +372,24 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       )
                     : const Text('Create Account'),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Sign in link
               TextButton(
                 onPressed: () => context.go('/signin'),
                 child: const Text('Already have an account? Sign In'),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Terms and conditions
               Text(
                 'By creating an account, you agree to our Terms of Service and Privacy Policy',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -387,4 +399,4 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
     );
   }
-} 
+}

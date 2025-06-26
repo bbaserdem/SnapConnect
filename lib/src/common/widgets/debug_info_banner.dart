@@ -1,7 +1,7 @@
-/// Debug information banner to show app status during development.
-/// 
-/// This widget displays network connectivity, Firebase status, and other debug info
-/// to help troubleshoot issues during development.
+// Debug information banner to show app status during development.
+//
+// This widget displays network connectivity, Firebase status, and other debug info
+// to help troubleshoot issues during development.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,9 +24,11 @@ class _DebugInfoBannerState extends ConsumerState<DebugInfoBanner> {
   void initState() {
     super.initState();
     _checkConnectivity();
-    
+
     // Listen to connectivity changes
-    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
+    Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
       if (mounted) {
         setState(() {
           _connectivityResult = result;
@@ -45,17 +47,31 @@ class _DebugInfoBannerState extends ConsumerState<DebugInfoBanner> {
   }
 
   String _getConnectivityString() {
-    if (_connectivityResult == null) return 'Checking...';
-    if (_connectivityResult!.contains(ConnectivityResult.none)) return 'No Connection';
-    if (_connectivityResult!.contains(ConnectivityResult.wifi)) return 'WiFi';
-    if (_connectivityResult!.contains(ConnectivityResult.mobile)) return 'Mobile';
-    if (_connectivityResult!.contains(ConnectivityResult.ethernet)) return 'Ethernet';
+    if (_connectivityResult == null) {
+      return 'Checking...';
+    }
+    if (_connectivityResult!.contains(ConnectivityResult.none)) {
+      return 'No Connection';
+    }
+    if (_connectivityResult!.contains(ConnectivityResult.wifi)) {
+      return 'WiFi';
+    }
+    if (_connectivityResult!.contains(ConnectivityResult.mobile)) {
+      return 'Mobile';
+    }
+    if (_connectivityResult!.contains(ConnectivityResult.ethernet)) {
+      return 'Ethernet';
+    }
     return 'Connected';
   }
 
   Color _getStatusColor() {
-    if (_connectivityResult == null) return Colors.orange;
-    if (_connectivityResult!.contains(ConnectivityResult.none)) return Colors.red;
+    if (_connectivityResult == null) {
+      return Colors.orange;
+    }
+    if (_connectivityResult!.contains(ConnectivityResult.none)) {
+      return Colors.red;
+    }
     return Colors.green;
   }
 
@@ -111,18 +127,27 @@ class _DebugInfoBannerState extends ConsumerState<DebugInfoBanner> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoRow('Network', _getConnectivityString(), _getStatusColor()),
+                      _buildInfoRow(
+                        'Network',
+                        _getConnectivityString(),
+                        _getStatusColor(),
+                      ),
                       const SizedBox(height: 4),
-                      _buildInfoRow('Platform', defaultTargetPlatform.name, Colors.blue),
+                      _buildInfoRow(
+                        'Platform',
+                        defaultTargetPlatform.name,
+                        Colors.blue,
+                      ),
                       const SizedBox(height: 4),
-                      _buildInfoRow('Mode', kDebugMode ? 'Debug' : 'Release', Colors.blue),
+                      _buildInfoRow(
+                        'Mode',
+                        kDebugMode ? 'Debug' : 'Release',
+                        Colors.blue,
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         'Tap to collapse',
-                        style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                        ),
+                        style: TextStyle(color: Colors.white54, fontSize: 10),
                       ),
                     ],
                   ),
@@ -140,10 +165,7 @@ class _DebugInfoBannerState extends ConsumerState<DebugInfoBanner> {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Text(
@@ -157,13 +179,10 @@ class _DebugInfoBannerState extends ConsumerState<DebugInfoBanner> {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 11),
           ),
         ),
       ],
     );
   }
-} 
+}

@@ -1,7 +1,7 @@
-/// Camera screen for capturing photos and videos using CamerAwesome.
-/// 
-/// This screen serves as the main camera interface where users can
-/// capture content, switch cameras, toggle flash, and navigate to editing.
+// Camera screen for capturing photos and videos using CamerAwesome.
+//
+// This screen serves as the main camera interface where users can
+// capture content, switch cameras, toggle flash, and navigate to editing.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +19,7 @@ class CameraScreen extends ConsumerStatefulWidget {
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends ConsumerState<CameraScreen> 
+class _CameraScreenState extends ConsumerState<CameraScreen>
     with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   bool _hasInitialized = false;
   bool _isDisposed = false;
@@ -37,7 +37,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   /// Initialize camera with proper error handling
   void _initializeCamera() {
     if (_hasInitialized || _isDisposed) return;
-    
+
     // Initialize camera after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && !_hasInitialized && !_isDisposed) {
@@ -51,7 +51,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   void dispose() {
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
-    
+
     // Only dispose camera if we actually initialized it
     if (_hasInitialized) {
       ref.read(app_camera.cameraStateNotifierProvider.notifier).dispose();
@@ -62,9 +62,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     if (!mounted || !_hasInitialized || _isDisposed) return;
-    
+
     // Only handle app lifecycle changes, not tab navigation
     switch (state) {
       case AppLifecycleState.paused:
@@ -84,9 +84,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     if (_isDisposed) return const SizedBox.shrink();
-    
+
     final theme = Theme.of(context);
     final cameraState = ref.watch(app_camera.cameraStateNotifierProvider);
 
@@ -97,22 +97,27 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   }
 
   /// Build camera body with proper state management
-  Widget _buildCameraBody(app_camera.AppCameraState cameraState, ThemeData theme) {
+  Widget _buildCameraBody(
+    app_camera.AppCameraState cameraState,
+    ThemeData theme,
+  ) {
     // Show camera preview when properly initialized
-    if (cameraState.hasPermissions && cameraState.isInitialized && !_isDisposed) {
+    if (cameraState.hasPermissions &&
+        cameraState.isInitialized &&
+        !_isDisposed) {
       return _buildCameraPreview(cameraState);
     }
-    
+
     // Show loading state
     if (cameraState.isLoading) {
       return _buildLoadingView();
     }
-    
+
     // Show error state
     if (cameraState.error != null) {
       return _buildErrorView(cameraState.error!, theme);
     }
-    
+
     // Show permission request
     return _buildPermissionView(theme);
   }
@@ -143,11 +148,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   Widget _buildLoadingView() {
     return const ColoredBox(
       color: Colors.black,
-      child: Center(
-        child: CircularProgressIndicator(
-          color: Colors.white,
-        ),
-      ),
+      child: Center(child: CircularProgressIndicator(color: Colors.white)),
     );
   }
 
@@ -178,7 +179,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
               Text(
                 error,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: ColorConstants.almostOpaque),
+                  color: Colors.white.withValues(
+                    alpha: ColorConstants.almostOpaque,
+                  ),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -186,7 +189,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
               ElevatedButton(
                 onPressed: () {
                   if (mounted && !_isDisposed) {
-                    ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+                    ref
+                        .read(app_camera.cameraStateNotifierProvider.notifier)
+                        .initialize();
                   }
                 },
                 child: const Text('Retry'),
@@ -211,7 +216,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
               Icon(
                 Icons.camera_alt,
                 size: UIDimensions.extraLargeIcon,
-                color: Colors.white.withValues(alpha: ColorConstants.highOpacity),
+                color: Colors.white.withValues(
+                  alpha: ColorConstants.highOpacity,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -225,7 +232,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
               Text(
                 'Grant camera permission to capture photos and videos',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: ColorConstants.almostOpaque),
+                  color: Colors.white.withValues(
+                    alpha: ColorConstants.almostOpaque,
+                  ),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -233,7 +242,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
               ElevatedButton(
                 onPressed: () {
                   if (mounted && !_isDisposed) {
-                    ref.read(app_camera.cameraStateNotifierProvider.notifier).initialize();
+                    ref
+                        .read(app_camera.cameraStateNotifierProvider.notifier)
+                        .initialize();
                   }
                 },
                 child: const Text('Grant Permission'),
@@ -244,4 +255,4 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       ),
     );
   }
-} 
+}

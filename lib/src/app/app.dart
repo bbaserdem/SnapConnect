@@ -1,7 +1,7 @@
-/// Main application widget that configures routing, theme, and global providers.
-/// 
-/// This file serves as the root of the SnapConnect application, setting up
-/// the MaterialApp with go_router for navigation and applying the app theme.
+// Main application widget that configures routing, theme, and global providers.
+//
+// This file serves as the root of the SnapConnect application, setting up
+// the MaterialApp with go_router for navigation and applying the app theme.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,4 +26,4 @@ class SnapConnectApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
     );
   }
-} 
+}

@@ -1,7 +1,7 @@
-/// Home screen displaying the initial "Hello World" implementation.
-/// 
-/// This screen serves as the main entry point for the SnapConnect application
-/// and validates that the app setup, theme, and navigation are working correctly.
+// Home screen displaying the initial "Hello World" implementation.
+//
+// This screen serves as the main entry point for the SnapConnect application
+// and validates that the app setup, theme, and navigation are working correctly.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,9 +66,9 @@ class HomeScreen extends ConsumerWidget {
                     color: colorScheme.onPrimary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Welcome Text
                 Text(
                   'Hello World!',
@@ -77,18 +77,18 @@ class HomeScreen extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 Text(
                   'Welcome to SnapConnect',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: colorScheme.onSurface,
                   ),
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'AI-powered social media with smart photo sharing',
                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -96,9 +96,9 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Status Card
                 Card(
                   child: Padding(
@@ -140,10 +140,7 @@ class HomeScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(
-                              Icons.info,
-                              color: colorScheme.primary,
-                            ),
+                            Icon(Icons.info, color: colorScheme.primary),
                             const SizedBox(width: 8),
                             const Text('Version: 0.1.1 - Phase 1.1 Complete'),
                           ],
@@ -159,4 +156,4 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
-} 
+}

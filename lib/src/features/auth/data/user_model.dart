@@ -1,5 +1,5 @@
-/// User model representing the user data stored in Firestore
-/// This model is used to represent both the authenticated user and other users in the app
+// User model representing the user data stored in Firestore
+// This model is used to represent both the authenticated user and other users in the app
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -24,9 +24,9 @@ class UserModel {
 
   /// Create a UserModel from a Firestore document
   factory UserModel.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> snapshot,
-    [SnapshotOptions? options]
-  ) {
+    DocumentSnapshot<Map<String, dynamic>> snapshot, [
+    SnapshotOptions? options,
+  ]) {
     final data = snapshot.data()!;
     return UserModel(
       id: snapshot.id,
@@ -69,4 +69,4 @@ class UserModel {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-} 
+}

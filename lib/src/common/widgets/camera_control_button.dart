@@ -1,7 +1,7 @@
-/// Reusable camera control button widget.
-/// 
-/// This widget provides a consistent styling for camera control buttons
-/// throughout the camera interface, eliminating code duplication.
+// Reusable camera control button widget.
+//
+// This widget provides a consistent styling for camera control buttons
+// throughout the camera interface, eliminating code duplication.
 
 import 'package:flutter/material.dart';
 import '../../config/constants.dart';
@@ -45,18 +45,16 @@ class CameraControlButton extends StatelessWidget {
         width: buttonSize,
         height: buttonSize,
         decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.white.withValues(alpha: ColorConstants.lowOpacity),
+          color:
+              backgroundColor ??
+              Colors.white.withValues(alpha: ColorConstants.lowOpacity),
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
             color: Colors.white.withValues(alpha: ColorConstants.mediumOpacity),
             width: UIDimensions.thinBorder,
           ),
         ),
-        child: Icon(
-          icon,
-          size: iconSize,
-          color: iconColor,
-        ),
+        child: Icon(icon, size: iconSize, color: iconColor),
       ),
     );
   }
@@ -130,8 +128,4 @@ class CameraCaptureButton extends StatelessWidget {
 }
 
 /// Enum for button sizes
-enum CameraControlButtonSize {
-  small,
-  medium,
-  large,
-} 
+enum CameraControlButtonSize { small, medium, large }
