@@ -6,9 +6,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:camerawesome/camerawesome_plugin.dart';
 
 import '../features/auth/auth.dart';
 import '../features/camera/presentation/camera_screen.dart';
+import '../features/camera/presentation/snap_edit_screen.dart';
 import '../features/friends/presentation/friends_screen.dart';
 import '../features/profile/profile.dart';
 import '../features/messages/presentation/messages_screen.dart';
@@ -86,6 +88,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile-setup',
         name: 'profile-setup',
         builder: (context, state) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: '/snap-edit',
+        name: 'snap-edit',
+        builder: (context, state) => SnapEditScreen(
+          mediaCapture: state.extra as MediaCapture,
+        ),
       ),
 
       // Main navigation shell with bottom navigation

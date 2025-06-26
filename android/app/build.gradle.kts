@@ -18,7 +18,7 @@ android {
         applicationId = "com.example.snapconnect"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21 // Set minimum SDK version for Firebase
+        minSdk = 24 // Set minimum SDK version for CamerAwesome and Firebase
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
