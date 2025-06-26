@@ -1,7 +1,7 @@
-/// Friends screen for managing friend lists and friend requests.
-/// 
-/// This screen allows users to view their current friends list,
-/// search for new friends, and manage friend requests.
+// Friends screen for managing friend lists and friend requests.
+//
+// This screen allows users to view their current friends list,
+// search for new friends, and manage friend requests.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +36,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -67,10 +67,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildFriendsList(),
-          _buildRequestsList(),
-        ],
+        children: [_buildFriendsList(), _buildRequestsList()],
       ),
     );
   }
@@ -152,10 +149,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
                     decoration: BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorScheme.surface,
-                        width: 2,
-                      ),
+                      border: Border.all(color: colorScheme.surface, width: 2),
                     ),
                   ),
                 ),
@@ -284,7 +278,9 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Friend search will be implemented in Phase 1.6'),
+                  content: Text(
+                    'Friend search will be implemented in Phase 1.6',
+                  ),
                 ),
               );
             },
@@ -311,9 +307,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$message (Feature will be implemented later)'),
-      ),
+      SnackBar(content: Text('$message (Feature will be implemented later)')),
     );
   }
 
@@ -324,9 +318,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
         : 'Declined friend request from $userName';
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$message (Feature will be implemented later)'),
-      ),
+      SnackBar(content: Text('$message (Feature will be implemented later)')),
     );
   }
-} 
+}

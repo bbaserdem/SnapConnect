@@ -1,7 +1,7 @@
-/// Stories screen for viewing and managing user stories.
-/// 
-/// This screen displays stories from friends and allows users to
-/// view story content in a full-screen interface.
+// Stories screen for viewing and managing user stories.
+//
+// This screen displays stories from friends and allows users to
+// view story content in a full-screen interface.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,9 +43,9 @@ class StoriesScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            
+
             const Divider(),
-            
+
             // Friends' Stories section
             Padding(
               padding: const EdgeInsets.all(16),
@@ -101,11 +101,7 @@ class StoriesScreen extends ConsumerWidget {
                     style: BorderStyle.solid,
                   ),
                 ),
-                child: Icon(
-                  Icons.add,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
+                child: Icon(Icons.add, color: colorScheme.primary, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -203,7 +199,7 @@ class StoriesScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            
+
             // Story preview overlay
             Container(
               width: double.infinity,
@@ -220,7 +216,7 @@ class StoriesScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            
+
             // User info
             Positioned(
               bottom: 12,
@@ -236,12 +232,11 @@ class StoriesScreen extends ConsumerWidget {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: hasNewStory ? colorScheme.primary : Colors.grey,
+                          color: hasNewStory
+                              ? colorScheme.primary
+                              : Colors.grey,
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: Center(
                           child: Text(
@@ -284,7 +279,7 @@ class StoriesScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            
+
             // New story indicator
             if (hasNewStory)
               Positioned(
@@ -296,10 +291,7 @@ class StoriesScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: colorScheme.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 1,
-                    ),
+                    border: Border.all(color: Colors.white, width: 1),
                   ),
                 ),
               ),
@@ -311,14 +303,7 @@ class StoriesScreen extends ConsumerWidget {
 
   /// Gets placeholder timestamp for a story
   String _getStoryTimestamp(int index) {
-    final timestamps = [
-      '2h',
-      '4h',
-      '8h',
-      '12h',
-      '18h',
-      '20h',
-    ];
+    final timestamps = ['2h', '4h', '8h', '12h', '18h', '20h'];
     return timestamps[index % timestamps.length];
   }
 
@@ -326,8 +311,10 @@ class StoriesScreen extends ConsumerWidget {
   void _openStory(BuildContext context, String userName) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Opening $userName\'s story (Feature coming in Phase 1.5)'),
+        content: Text(
+          'Opening $userName\'s story (Feature coming in Phase 1.5)',
+        ),
       ),
     );
   }
-} 
+}

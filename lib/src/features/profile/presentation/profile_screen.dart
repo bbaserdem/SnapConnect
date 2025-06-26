@@ -1,7 +1,7 @@
-/// Profile screen for viewing and editing user profile information.
-/// 
-/// This screen displays the current user's profile including their bio,
-/// interests, and provides options to edit profile information.
+// Profile screen for viewing and editing user profile information.
+//
+// This screen displays the current user's profile including their bio,
+// interests, and provides options to edit profile information.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,48 +51,48 @@ class ProfileScreen extends ConsumerWidget {
     return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>?>(
       future: ref.read(authRepositoryProvider).getUserDocument(user.uid),
       builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading profile',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${snapshot.error}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.7),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: colorScheme.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading profile',
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${snapshot.error}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
 
-                final userData = snapshot.data?.data();
-                if (userData == null) {
-                  return const Center(
-                    child: Text('Profile not found'),
-                  );
-                }
+        final userData = snapshot.data?.data();
+        if (userData == null) {
+          return const Center(child: Text('Profile not found'));
+        }
 
-                return _buildProfileContent(context, user, userData, theme, colorScheme);
-              },
-            );
+        return _buildProfileContent(
+          context,
+          user,
+          userData,
+          theme,
+          colorScheme,
+        );
+      },
+    );
   }
 
   /// Builds the main profile content
@@ -150,7 +150,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Username
                 Text(
                   '@$username',
@@ -159,7 +159,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                
+
                 // Email
                 Text(
                   user.email ?? '',
@@ -170,9 +170,9 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Profile sections
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -189,9 +189,9 @@ class ProfileScreen extends ConsumerWidget {
                   theme: theme,
                   colorScheme: colorScheme,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Interests section
                 _buildInterestsSection(
                   context,
@@ -199,14 +199,14 @@ class ProfileScreen extends ConsumerWidget {
                   theme: theme,
                   colorScheme: colorScheme,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Stats section
                 _buildStatsSection(context, theme, colorScheme),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Edit profile button
                 SizedBox(
                   width: double.infinity,
@@ -221,7 +221,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
               ],
             ),
@@ -249,11 +249,7 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
+                Icon(icon, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   title,
@@ -267,7 +263,7 @@ class ProfileScreen extends ConsumerWidget {
             Text(
               content,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isEmpty 
+                color: isEmpty
                     ? colorScheme.onSurface.withValues(alpha: 0.5)
                     : colorScheme.onSurface,
                 fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
@@ -294,11 +290,7 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.interests,
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
+                Icon(Icons.interests, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Interests',
@@ -427,7 +419,10 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// Shows the edit profile dialog
-  void _showEditProfileDialog(BuildContext context, Map<String, dynamic> userData) {
+  void _showEditProfileDialog(
+    BuildContext context,
+    Map<String, dynamic> userData,
+  ) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Edit profile functionality coming in Phase 1.3!'),

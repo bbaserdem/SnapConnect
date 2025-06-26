@@ -1,5 +1,5 @@
-/// Profile setup screen that allows users to complete their profile
-/// This screen is shown after sign up to collect additional user information
+// Profile setup screen that allows users to complete their profile
+// This screen is shown after sign up to collect additional user information
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +45,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   Future<void> _handleProfileSetup() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedInterests.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -65,7 +65,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
 
       final authRepository = ref.read(authRepositoryProvider);
-      
+
       // Update the user's profile in Firestore
       await authRepository.updateUserProfile(
         uid: user.uid,
@@ -81,7 +81,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate to home screen after profile setup
         context.go('/');
       }
@@ -106,7 +106,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Complete Your Profile'),
-        automaticallyImplyLeading: false, // Disable back button since this is required
+        automaticallyImplyLeading:
+            false, // Disable back button since this is required
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -129,16 +130,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Welcome to SnapConnect!',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Complete your profile to connect with the body modification community',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -146,15 +148,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Bio section
               Text(
                 'Tell us about yourself',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -176,25 +178,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Interest tags section
               Text(
                 'Select your interests',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 'Choose the body modification styles and interests that resonate with you',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Interest tags wrapped in a card
               Card(
                 child: Padding(
@@ -221,9 +225,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Complete profile button
               FilledButton(
                 onPressed: _isLoading ? null : _handleProfileSetup,
@@ -241,14 +245,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       )
                     : const Text('Complete Profile'),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Info text
               Text(
                 'You can update your profile information later in settings',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -258,4 +264,4 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       ),
     );
   }
-} 
+}

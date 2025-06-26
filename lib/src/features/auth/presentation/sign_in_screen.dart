@@ -1,5 +1,5 @@
-/// Sign in screen that allows users to authenticate with their credentials
-/// This screen handles form validation and displays error messages
+// Sign in screen that allows users to authenticate with their credentials
+// This screen handles form validation and displays error messages
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,11 +29,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      await ref.read(authStateNotifierProvider.notifier).signIn(
+      await ref
+          .read(authStateNotifierProvider.notifier)
+          .signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-      
+
       if (mounted) {
         // Success routing handled by router
         ScaffoldMessenger.of(context).showSnackBar(
@@ -53,7 +55,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     } catch (e) {
       if (mounted) {
         final errorMessage = e.toString().replaceAll('Exception: ', '');
-        
+
         // Show more user-friendly error dialog instead of just snackbar
         showDialog(
           context: context,
@@ -74,18 +76,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 if (errorMessage.toLowerCase().contains('password'))
                   const Text(
                     '💡 Forgot your password? Use the "Forgot Password?" link below.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                   ),
-                if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('not found'))
+                if (errorMessage.toLowerCase().contains('email') &&
+                    errorMessage.contains('not found'))
                   const Text(
                     '💡 Don\'t have an account yet? Try signing up instead.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
+                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                   ),
               ],
             ),
@@ -94,7 +91,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('OK'),
               ),
-              if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('not found'))
+              if (errorMessage.toLowerCase().contains('email') &&
+                  errorMessage.contains('not found'))
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -114,9 +112,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final authState = ref.watch(authStateNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign In'),
-      ),
+      appBar: AppBar(title: const Text('Sign In')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -138,16 +134,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Welcome Back',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Sign in to continue your journey',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -155,7 +152,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
 
               // Email field
@@ -172,15 +169,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Password field
               TextFormField(
                 controller: _passwordController,
@@ -198,9 +197,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Sign in button
               FilledButton(
                 onPressed: authState.isLoading ? null : _handleSignIn,
@@ -218,17 +217,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       )
                     : const Text('Sign In'),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Sign up link
               TextButton(
                 onPressed: () => context.go('/signup'),
                 child: const Text('Don\'t have an account? Sign Up'),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Forgot password placeholder
               TextButton(
                 onPressed: () {
@@ -243,7 +242,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 child: Text(
                   'Forgot Password?',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -253,4 +254,4 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       ),
     );
   }
-} 
+}

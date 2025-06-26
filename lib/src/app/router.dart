@@ -1,7 +1,7 @@
-/// Application routing configuration using go_router.
-/// 
-/// This file defines all the routes for the SnapConnect application,
-/// including navigation paths and route transitions.
+// Application routing configuration using go_router.
+//
+// This file defines all the routes for the SnapConnect application,
+// including navigation paths and route transitions.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,8 +33,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final currentLocation = state.matchedLocation;
 
       // Define auth routes that should be accessible only when logged out
-      final isAuthRoute = currentLocation == '/signin' || 
-                         currentLocation == '/signup';
+      final isAuthRoute =
+          currentLocation == '/signin' || currentLocation == '/signup';
 
       // Define routes that don't require redirect checks
       final isProfileSetupRoute = currentLocation == '/profile-setup';
@@ -58,7 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // For logged in users, check profile setup status using cache
       if (isLoggedIn && !isProfileSetupRoute) {
         final uid = user.uid;
-        
+
         // Check cache first
         if (_profileSetupCache.containsKey(uid)) {
           final hasCompletedSetup = _profileSetupCache[uid]!;
@@ -69,9 +69,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Schedule async check but don't block navigation
           Future.microtask(() async {
             try {
-              final hasCompletedSetup = await authRepository.hasCompletedProfileSetup(uid);
+              final hasCompletedSetup = await authRepository
+                  .hasCompletedProfileSetup(uid);
               _profileSetupCache[uid] = hasCompletedSetup;
-              
+
               // If setup is not complete and user is not already on profile setup,
               // navigate to profile setup
               if (!hasCompletedSetup && currentLocation != '/profile-setup') {
@@ -125,9 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/snap-edit',
         name: 'snap-edit',
-        builder: (context, state) => SnapEditScreen(
-          mediaCapture: state.extra,
-        ),
+        builder: (context, state) => SnapEditScreen(mediaCapture: state.extra),
       ),
 
       // Main navigation shell with bottom navigation
@@ -146,7 +145,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          
+
           // Friends tab
           StatefulShellBranch(
             routes: [
@@ -157,7 +156,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          
+
           // Profile tab
           StatefulShellBranch(
             routes: [
@@ -168,7 +167,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          
+
           // Messages tab
           StatefulShellBranch(
             routes: [
@@ -179,7 +178,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          
+
           // Stories tab
           StatefulShellBranch(
             routes: [
@@ -198,11 +197,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
               'Error: ${state.error}',
@@ -219,4 +214,4 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ),
   );
-}); 
+});

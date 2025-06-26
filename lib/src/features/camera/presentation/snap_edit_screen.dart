@@ -1,7 +1,7 @@
-/// Snap editing screen for adding text overlays and setting view duration.
-/// 
-/// This screen allows users to edit their captured snaps by adding text,
-/// setting view duration, and choosing how to share their content.
+// Snap editing screen for adding text overlays and setting view duration.
+//
+// This screen allows users to edit their captured snaps by adding text,
+// setting view duration, and choosing how to share their content.
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -14,10 +14,7 @@ import '../../../config/constants.dart';
 
 /// Snap edit screen widget
 class SnapEditScreen extends ConsumerStatefulWidget {
-  const SnapEditScreen({
-    required this.mediaCapture,
-    super.key,
-  });
+  const SnapEditScreen({required this.mediaCapture, super.key});
 
   final dynamic mediaCapture; // This will be the event from onMediaCaptureEvent
 
@@ -29,7 +26,7 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFocusNode = FocusNode();
   VideoPlayerController? _videoController;
-  
+
   double _textX = 0.5;
   double _textY = 0.5;
   int _snapDuration = 3; // Default 3 seconds
@@ -54,12 +51,14 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
   /// Initialize media (video player if it's a video)
   void _initializeMedia() {
     if (widget.mediaCapture.isPicture) return;
-    
+
     // Get the video file path from captureRequest
     widget.mediaCapture.captureRequest.when(
       single: (single) {
         if (single.file != null && !widget.mediaCapture.isPicture) {
-          _videoController = VideoPlayerController.file(File(single.file!.path));
+          _videoController = VideoPlayerController.file(
+            File(single.file!.path),
+          );
           _videoController!.initialize().then((_) {
             setState(() {});
             _videoController!.play();
@@ -114,24 +113,29 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
       body: Stack(
         children: [
           // Media preview
-          Positioned.fill(
-            child: _buildMediaPreview(screenSize),
-          ),
+          Positioned.fill(child: _buildMediaPreview(screenSize)),
 
           // Text overlay (if text is added)
           if (_textController.text.isNotEmpty)
             Positioned(
-              left: _textX * screenSize.width - (_textController.text.length * _textSize / 4),
+              left:
+                  _textX * screenSize.width -
+                  (_textController.text.length * _textSize / 4),
               top: _textY * screenSize.height - _textSize / 2,
               child: GestureDetector(
                 onPanUpdate: (details) {
                   setState(() {
-                    _textX = (details.globalPosition.dx / screenSize.width).clamp(0.0, 1.0);
-                    _textY = (details.globalPosition.dy / screenSize.height).clamp(0.0, 1.0);
+                    _textX = (details.globalPosition.dx / screenSize.width)
+                        .clamp(0.0, 1.0);
+                    _textY = (details.globalPosition.dy / screenSize.height)
+                        .clamp(0.0, 1.0);
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
@@ -158,9 +162,7 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
 
           // Text input overlay (when in text mode)
           if (_isTextMode)
-            Positioned.fill(
-              child: _buildTextInputOverlay(theme),
-            ),
+            Positioned.fill(child: _buildTextInputOverlay(theme)),
         ],
       ),
     );
@@ -218,10 +220,7 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.8),
-            Colors.transparent,
-          ],
+          colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
         ),
       ),
       child: Column(
@@ -245,7 +244,9 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
                   value: _snapDuration.toDouble(),
                   min: AppConstants.minSnapDuration.toDouble(),
                   max: AppConstants.maxSnapDuration.toDouble(),
-                  divisions: AppConstants.maxSnapDuration - AppConstants.minSnapDuration,
+                  divisions:
+                      AppConstants.maxSnapDuration -
+                      AppConstants.minSnapDuration,
                   onChanged: (value) {
                     setState(() {
                       _snapDuration = value.round();
@@ -329,7 +330,10 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
                     _isTextMode = false;
                   });
                 },
-                child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -371,10 +375,7 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ],
       ),
@@ -389,37 +390,38 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
         title: const Text('Choose Text Color'),
         content: Wrap(
           spacing: 8,
-          children: [
-            Colors.white,
-            Colors.black,
-            Colors.red,
-            Colors.blue,
-            Colors.green,
-            Colors.yellow,
-            Colors.purple,
-            Colors.orange,
-          ].map((color) {
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _textColor = color;
-                });
-                Navigator.of(context).pop();
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _textColor == color ? Colors.blue : Colors.grey,
-                    width: 2,
+          children:
+              [
+                Colors.white,
+                Colors.black,
+                Colors.red,
+                Colors.blue,
+                Colors.green,
+                Colors.yellow,
+                Colors.purple,
+                Colors.orange,
+              ].map((color) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _textColor = color;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _textColor == color ? Colors.blue : Colors.grey,
+                        width: 2,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
+                );
+              }).toList(),
         ),
       ),
     );
@@ -436,10 +438,7 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Sample Text',
-                  style: TextStyle(fontSize: _textSize),
-                ),
+                Text('Sample Text', style: TextStyle(fontSize: _textSize)),
                 Slider(
                   value: _textSize,
                   min: 16.0,
@@ -474,15 +473,15 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
     // 1. Applying text overlays to the image/video
     // 2. Saving the edited media
     // 3. Navigating to share/send screen or returning to camera
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Send functionality will be implemented in Phase 1.4'),
         duration: Duration(seconds: 2),
       ),
     );
-    
+
     // For now, just navigate back to camera
     context.pop();
   }
-} 
+}

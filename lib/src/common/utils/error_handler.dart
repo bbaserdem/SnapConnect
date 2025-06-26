@@ -1,7 +1,7 @@
-/// Standardized error handling utilities for the application.
-/// 
-/// This file provides consistent error handling patterns, logging,
-/// and user-friendly error messages throughout the app.
+// Standardized error handling utilities for the application.
+//
+// This file provides consistent error handling patterns, logging,
+// and user-friendly error messages throughout the app.
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -39,27 +39,29 @@ class ErrorHandler {
   /// Handle general exceptions and provide user-friendly messages
   static String handleGeneralException(Exception e) {
     final errorMessage = e.toString().replaceAll('Exception: ', '');
-    
+
     // Handle specific known error patterns
     if (errorMessage.toLowerCase().contains('username')) {
       return errorMessage; // Username errors are already user-friendly
     }
-    
-    if (errorMessage.toLowerCase().contains('network') || 
+
+    if (errorMessage.toLowerCase().contains('network') ||
         errorMessage.toLowerCase().contains('connection')) {
       return 'Network error. Please check your internet connection and try again.';
     }
-    
+
     if (errorMessage.toLowerCase().contains('timeout')) {
       return 'Request timed out. Please try again.';
     }
-    
+
     if (errorMessage.toLowerCase().contains('permission')) {
       return 'Permission denied. Please check your account permissions.';
     }
-    
+
     // Return the original message if it's already user-friendly
-    return errorMessage.isNotEmpty ? errorMessage : 'An unexpected error occurred. Please try again.';
+    return errorMessage.isNotEmpty
+        ? errorMessage
+        : 'An unexpected error occurred. Please try again.';
   }
 
   /// Log errors in debug mode with consistent formatting
@@ -73,19 +75,19 @@ class ErrorHandler {
       final buffer = StringBuffer();
       buffer.writeln('🔥 Error in $operation:');
       buffer.writeln('   Error: $error');
-      
+
       if (additionalInfo != null && additionalInfo.isNotEmpty) {
         buffer.writeln('   Additional Info:');
         additionalInfo.forEach((key, value) {
           buffer.writeln('     $key: $value');
         });
       }
-      
+
       if (stackTrace != null) {
         buffer.writeln('   Stack Trace:');
         buffer.writeln(stackTrace.toString());
       }
-      
+
       debugPrint(buffer.toString());
     }
   }
@@ -98,23 +100,23 @@ class ErrorHandler {
     if (kDebugMode) {
       final buffer = StringBuffer();
       buffer.writeln('✅ Success in $operation');
-      
+
       if (additionalInfo != null && additionalInfo.isNotEmpty) {
         buffer.writeln('   Info:');
         additionalInfo.forEach((key, value) {
           buffer.writeln('     $key: $value');
         });
       }
-      
+
       debugPrint(buffer.toString());
     }
   }
 
   /// Create a standardized exception with consistent formatting
   static Exception createException(String message, {String? operation}) {
-    final fullMessage = operation != null 
+    final fullMessage = operation != null
         ? 'Failed to $operation: $message'
         : message;
     return Exception(fullMessage);
   }
-} 
+}

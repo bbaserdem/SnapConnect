@@ -1,7 +1,7 @@
-/// Reusable camera filter button widget.
-/// 
-/// This widget provides a consistent styling for camera filter buttons
-/// in the filter selection list.
+// Reusable camera filter button widget.
+//
+// This widget provides a consistent styling for camera filter buttons
+// in the filter selection list.
 
 import 'package:flutter/material.dart';
 import '../../config/constants.dart';
@@ -28,7 +28,7 @@ class CameraFilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -36,15 +36,21 @@ class CameraFilterButton extends StatelessWidget {
         height: UIDimensions.filterItemWidth,
         margin: const EdgeInsets.only(right: UIDimensions.smallSpacing * 1.5),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? theme.colorScheme.primary.withValues(alpha: ColorConstants.mediumOpacity)
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(
+                  alpha: ColorConstants.mediumOpacity,
+                )
               : Colors.white.withValues(alpha: ColorConstants.lowOpacity),
-          borderRadius: BorderRadius.circular(UIDimensions.extraLargeBorderRadius),
+          borderRadius: BorderRadius.circular(
+            UIDimensions.extraLargeBorderRadius,
+          ),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? theme.colorScheme.primary
                 : Colors.white.withValues(alpha: ColorConstants.mediumOpacity),
-            width: isSelected ? UIDimensions.mediumBorder : UIDimensions.thinBorder,
+            width: isSelected
+                ? UIDimensions.mediumBorder
+                : UIDimensions.thinBorder,
           ),
         ),
         child: Center(
@@ -60,4 +66,4 @@ class CameraFilterButton extends StatelessWidget {
       ),
     );
   }
-} 
+}

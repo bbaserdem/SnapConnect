@@ -83,5 +83,4 @@ class DefaultFirebaseOptions {
     authDomain: 'snapconnect-bodymod.firebaseapp.com',
     storageBucket: 'snapconnect-bodymod.firebasestorage.app',
   );
-
 }

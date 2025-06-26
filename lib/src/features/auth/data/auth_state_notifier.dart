@@ -1,5 +1,5 @@
-/// Authentication state management using Riverpod
-/// This file contains the state notifier and providers for managing auth state
+// Authentication state management using Riverpod
+// This file contains the state notifier and providers for managing auth state
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,10 +13,9 @@ final authUserProvider = StreamProvider<User?>((ref) {
 
 /// Provider that exposes whether a user is authenticated
 final isAuthenticatedProvider = Provider<bool>((ref) {
-  return ref.watch(authUserProvider).maybeWhen(
-        data: (user) => user != null,
-        orElse: () => false,
-      );
+  return ref
+      .watch(authUserProvider)
+      .maybeWhen(data: (user) => user != null, orElse: () => false);
 });
 
 /// Auth state for managing loading and error states during auth operations
@@ -24,15 +23,9 @@ class AuthState {
   final bool isLoading;
   final String? errorMessage;
 
-  const AuthState({
-    this.isLoading = false,
-    this.errorMessage,
-  });
+  const AuthState({this.isLoading = false, this.errorMessage});
 
-  AuthState copyWith({
-    bool? isLoading,
-    String? errorMessage,
-  }) {
+  AuthState copyWith({bool? isLoading, String? errorMessage}) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -62,19 +55,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
       state = state.copyWith(isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
       rethrow;
     }
   }
 
   /// Sign in with email and password
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
@@ -84,10 +71,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
       state = state.copyWith(isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
       rethrow;
     }
   }
@@ -100,10 +84,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       await _authRepository.signOut();
       state = state.copyWith(isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
       rethrow;
     }
   }
@@ -112,6 +93,6 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 /// Provider for the AuthStateNotifier
 final authStateNotifierProvider =
     StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
-  final authRepository = ref.watch(authRepositoryProvider);
-  return AuthStateNotifier(authRepository);
-}); 
+      final authRepository = ref.watch(authRepositoryProvider);
+      return AuthStateNotifier(authRepository);
+    });
