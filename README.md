@@ -32,19 +32,21 @@ SnapConnect is a social media application for body modification enthusiasts, bui
    cd snapconnect
    ```
 
-2. Install dependencies:
+2. Place API keys in `.env.local` and Firebase configuration in `google-services.json`
+
+3. Install dependencies:
    ```bash
    flutter pub get
    ```
 
-3. Firebase Configuration:
+4. Firebase Configuration:
    - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
    - Enable Authentication (Email/Password)
    - Enable Cloud Firestore
    - Enable Firebase Storage
    - Enable App Check
 
-4. Add platform-specific Firebase configuration:
+5. Add platform-specific Firebase configuration:
    
    For Android:
    - In Firebase Console, register your Android app with package name `com.example.snapconnect`
@@ -56,7 +58,7 @@ SnapConnect is a social media application for body modification enthusiasts, bui
    - Download `GoogleService-Info.plist`
    - Place it in `ios/Runner/` directory (this file is gitignored)
 
-5. Update Android SDK version:
+6. Update Android SDK version:
    - Open `android/app/build.gradle`
    - Set `compileSdk = 35`
 
