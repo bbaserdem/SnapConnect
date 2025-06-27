@@ -53,4 +53,41 @@ import 'package:snapconnect/firebase_wrappers/firestore_stub.dart'
 - [ ] Update CI/tests
 
 ---
-After each tick, run `flutter run -d linux` **and** an Android build to catch issues early. 
+After each tick, run `flutter run -d linux` **and** an Android build to catch issues early.
+
+## 2025-06-27 – Pivot: FlutterFire Everywhere
+
+The Linux embedder for `cloud_firestore` is now considered stable, so the
+wrapper/`firebase_dart` strategy has been **abandoned**. We will run the same
+FlutterFire plugins on **all** platforms.
+
+### What we just changed
+
+| ✔ | Change |
+|---|--------|
+| ✅ | **Removed** `firebase_dart` from `pubspec.yaml` |
+| ✅ | **Simplified** `lib/firebase_bridge/firestore_bridge.dart` so it just returns `FirebaseFirestore.instance` |
+| ✅ | **Linux init** in `lib/main.dart` now calls `Firebase.initializeApp(options: DefaultFirebaseOptions.web)` |
+| ✅ | Cleaned up all `fd.` aliases & removed the `firebase_dart` import in `main.dart` |
+
+### Outstanding issue
+
+Running on Linux still triggers `[core/no-app]` – meaning the default app is not
+ready when a service is first touched.  Suspect order-of-execution: something in
+`runApp()` references Firebase before our `initializeApp()` `await` completes.
+
+### Next steps
+
+1. Guard any early-access singletons (e.g. `MessagingRepository`) so they aren't
+   instantiated until after the `firebaseInitialized` provider flips to `true`.
+2. Double-check `SnapConnectApp`'s root widgets for synchronous Firebase calls.
+3. Once fixed, verify:
+   - `flutter run -d linux` ✅
+   - `flutter run -d android` ✅
+4. Remove this issue note and celebrate full cross-platform parity.
+
+### Deprecated Sections
+
+Sections **1 – Wrapper Pattern** and **3 – Migration Steps** above are kept for
+historical context but are no longer applicable.  Ignore their check-boxes going
+forward.

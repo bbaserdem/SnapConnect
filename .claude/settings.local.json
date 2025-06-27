@@ -3,7 +3,8 @@
     "allow": [
       "Bash(flutter doctor:*)",
       "Bash(direnv reload:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": []
   }

@@ -5,7 +5,7 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as ff;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -23,7 +23,7 @@ import '../../../common/utils/error_handler.dart';
 /// Provider for the messaging repository
 final messagingRepositoryProvider = Provider<MessagingRepository>((ref) {
   return MessagingRepository(
-    firestore: FirebaseFirestore.instance,
+    firestore: ff.FirebaseFirestore.instance,
     storage: FirebaseStorage.instance,
     auth: FirebaseAuth.instance,
   );
@@ -40,7 +40,7 @@ final isarProvider = FutureProvider<Isar>((ref) async {
 
 /// Repository class that handles all messaging operations
 class MessagingRepository {
-  final FirebaseFirestore firestore;
+  final ff.FirebaseFirestore firestore;
   final FirebaseStorage storage;
   final FirebaseAuth auth;
   final Uuid _uuid = const Uuid();
@@ -351,7 +351,7 @@ class MessagingRepository {
   Future<void> markMessageAsViewed(String messageId, String userId) async {
     try {
       await firestore.collection('messages').doc(messageId).update({
-        'viewedBy': FieldValue.arrayUnion([userId]),
+        'viewedBy': ff.FieldValue.arrayUnion([userId]),
       });
 
       // Check if this is a disappearing message that should be deleted
@@ -413,8 +413,8 @@ class MessagingRepository {
         'lastMessageId': lastMessageId,
         'lastMessageContent': lastMessageContent,
         'lastMessageSenderId': lastMessageSenderId,
-        'lastMessageTimestamp': Timestamp.fromDate(lastMessageTimestamp),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'lastMessageTimestamp': ff.Timestamp.fromDate(lastMessageTimestamp),
+        'updatedAt': ff.FieldValue.serverTimestamp(),
       });
     } catch (e) {
       ErrorHandler.logError('update conversation last message', e);

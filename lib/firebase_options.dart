@@ -29,10 +29,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return linux;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -82,6 +79,15 @@ class DefaultFirebaseOptions {
     projectId: 'snapconnect-bodymod',
     authDomain: 'snapconnect-bodymod.firebaseapp.com',
     storageBucket: 'snapconnect-bodymod.firebasestorage.app',
+  );
+
+  static const FirebaseOptions linux = FirebaseOptions(
+    apiKey: 'AIzaSyAAi6M6VZKeBth4i-U8aS7bg13NlzF36w8',
+    appId: '1:589555525545:web:da28ee21836446deae86b8',
+    messagingSenderId: '589555525545',
+    projectId: 'snapconnect-bodymod',
+    authDomain: 'snapconnect-bodymod.firebaseapp.com',
+    storageBucket: 'snapconnect-bodymod.appspot.com',
   );
 
 }

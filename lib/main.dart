@@ -7,7 +7,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io' show Platform;
 
 import 'firebase_options.dart';
 import 'src/app/app.dart';
@@ -19,63 +18,38 @@ Future<void> main() async {
   bool firebaseInitialized = false;
   
   try {
-    // Initialize Firebase on all platforms.
-    if (Platform.isLinux) {
-      debugPrint('Initializing Firebase for Linux (using web options)...');
+    debugPrint('Initializing Firebase…');
 
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.web,
+    // One-liner works across mobile, web, and desktop because
+    // DefaultFirebaseOptions.currentPlatform now includes Linux.
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw Exception('Firebase initialization timed-out'),
+    );
+
+    // App Check (optional) – disabled in development to avoid emulator issues
+    /*
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.debug,
+        appleProvider: AppleProvider.debug,
+        webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
       ).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 5),
         onTimeout: () {
-          throw Exception('Firebase initialization timed out - check network connection');
+          debugPrint('App Check init timed out – continuing without it');
+          return;
         },
       );
-
-      firebaseInitialized = true;
-      debugPrint('Firebase initialized successfully (Linux)');
-
-    } else {
-      debugPrint('Initializing Firebase...');
-      
-      // Add timeout to prevent hanging on network issues
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Firebase initialization timed out - check network connection');
-        },
-      );
-
-      // Initialize App Check with debug provider for development
-      // DISABLED FOR DEVELOPMENT - Causes network issues in emulator
-      /*
-      try {
-        await FirebaseAppCheck.instance.activate(
-          // Use debug provider for development
-          androidProvider: AndroidProvider.debug,
-          // Use debug provider for Apple platforms
-          appleProvider: AppleProvider.debug,
-          // Use debug provider for web
-          webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-        ).timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            debugPrint('App Check initialization timed out - continuing without it');
-            return;
-          },
-        );
-      } catch (appCheckError) {
-        debugPrint('App Check initialization failed: $appCheckError');
-        // Continue without App Check for development
-      }
-      */
-      debugPrint('App Check disabled for development');
-
-      firebaseInitialized = true;
-      debugPrint('Firebase initialized successfully');
+    } catch (appCheckError) {
+      debugPrint('App Check init failed: $appCheckError');
     }
+    */
+
+    firebaseInitialized = true;
+    debugPrint('Firebase initialized ✅');
   } catch (e) {
     debugPrint('Error initializing Firebase: $e');
     debugPrint('Continuing with offline mode - some features may be limited');
