@@ -103,7 +103,8 @@ class ProfileScreen extends ConsumerWidget {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    final username = userData['username'] as String? ?? 'Unknown';
+    final username = userData['username'] as String? ?? 'unknown';
+    final displayName = userData['display_name'] as String? ?? username;
     final bio = userData['bio'] as String? ?? '';
     final interestTags = userData['interest_tags'] as List? ?? [];
 
@@ -151,22 +152,24 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 
-                // Username
+                // Display Name
                 Text(
-                  '@$username',
+                  displayName,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 
-                // Email
+                // Username handle
                 Text(
-                  user.email ?? '',
+                  '@$username',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
+
+                // No email displayed for privacy
               ],
             ),
           ),

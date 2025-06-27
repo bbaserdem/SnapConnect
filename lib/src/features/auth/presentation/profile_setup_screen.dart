@@ -82,8 +82,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ),
         );
         
-        // Navigate to home screen after profile setup
-        context.go('/');
+        // Navigate to profile page after profile setup
+        context.go('/profile');
       }
     } catch (e) {
       if (mounted) {

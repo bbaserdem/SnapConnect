@@ -8,6 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/stories_notifier.dart';
 import '../data/story_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// Family provider to fetch a user\'s username by UID.
+final _usernameProvider = FutureProvider.family<String, String>((ref, uid) async {
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  final data = doc.data();
+  return data?['username'] as String? ?? uid;
+});
 
 /// Main stories screen widget
 class StoriesScreen extends ConsumerWidget {
@@ -182,8 +190,7 @@ class StoriesScreen extends ConsumerWidget {
 
         return _buildStoryCard(
           context,
-          name: storyDoc.userId,
-          username: storyDoc.userId,
+          uid: storyDoc.userId,
           timestamp: timestamp,
           hasNewStory: true,
           storyDoc: storyDoc,
@@ -195,8 +202,7 @@ class StoriesScreen extends ConsumerWidget {
   /// Builds an individual story card
   Widget _buildStoryCard(
     BuildContext context, {
-    required String name,
-    required String username,
+    required String uid,
     required String timestamp,
     required bool hasNewStory,
     StoryDocument? storyDoc,
@@ -204,34 +210,26 @@ class StoriesScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final previewMedia = storyDoc?.media.isNotEmpty == true ? storyDoc!.media.last : null;
+
     return Card(
       child: InkWell(
-        onTap: () => _openStory(context, name),
+        onTap: () => _openStory(context, uid),
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
-            // Story preview background
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    colorScheme.primary.withValues(alpha: 0.7),
-                    colorScheme.secondary.withValues(alpha: 0.7),
-                  ],
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.camera_alt,
-                  size: 48,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
+            // Story preview background or placeholder
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: previewMedia != null && previewMedia.type == StoryMediaType.photo
+                  ? Image.network(
+                      previewMedia.url,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => _placeholderBackground(colorScheme),
+                    )
+                  : _placeholderBackground(colorScheme),
             ),
             
             // Story preview overlay
@@ -275,7 +273,7 @@ class StoriesScreen extends ConsumerWidget {
                         ),
                         child: Center(
                           child: Text(
-                            name[0],
+                            uid[0],
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -289,15 +287,25 @@ class StoriesScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final asyncUsername = ref.watch(_usernameProvider(uid));
+                                final display = asyncUsername.when(
+                                  data: (u) => u,
+                                  loading: () => '...',
+                                  error: (_, __) => uid.substring(0,6),
+                                );
+                                return Text(
+                                  display,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              },
                             ),
                             Text(
                               timestamp,
@@ -352,5 +360,29 @@ class StoriesScreen extends ConsumerWidget {
     } else {
       return '${diff.inDays}d';
     }
+  }
+
+  Widget _placeholderBackground(ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            colorScheme.primary.withValues(alpha: 0.7),
+            colorScheme.secondary.withValues(alpha: 0.7),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.camera_alt,
+          size: 48,
+          color: Colors.white.withValues(alpha: 0.8),
+        ),
+      ),
+    );
   }
 } 

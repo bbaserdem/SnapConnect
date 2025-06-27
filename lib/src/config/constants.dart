@@ -65,6 +65,9 @@ class AppConstants {
   static const int minUsernameLength = 3;
   static const int maxUsernameLength = 30;
   
+  // Display name length
+  static const int maxDisplayNameLength = 24;
+  
   // Story duration (24 hours in seconds)
   static const int storyDurationSeconds = 24 * 60 * 60;
   

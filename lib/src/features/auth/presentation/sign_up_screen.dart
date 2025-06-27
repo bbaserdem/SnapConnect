@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/auth_state_notifier.dart';
 import '../data/auth_repository.dart';
+import '../../../config/constants.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -19,6 +20,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _displayNameController = TextEditingController();
   bool _isUsernameChecking = false;
   bool _isUsernameAvailable = true;
   String? _usernameError;
@@ -31,6 +33,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
+    _displayNameController.dispose();
     super.dispose();
   }
 
@@ -109,17 +112,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text,
             username: _usernameController.text.trim(),
+            displayName: _displayNameController.text.trim(),
           );
       
       if (mounted) {
-        // Success message will be shown, routing handled by router
+        // Navigate to profile setup immediately
+        context.go('/profile-setup');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Row(
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Account created successfully! Please complete your profile.'),
+                Text('Account created! Complete your profile.'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -251,6 +256,28 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   }
                   if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                     return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Display name field
+              TextFormField(
+                controller: _displayNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Display Name',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.badge),
+                ),
+                textCapitalization: TextCapitalization.words,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a display name';
+                  }
+                  if (value.trim().length > AppConstants.maxDisplayNameLength) {
+                    return 'Display name must be <= ${AppConstants.maxDisplayNameLength} chars';
                   }
                   return null;
                 },

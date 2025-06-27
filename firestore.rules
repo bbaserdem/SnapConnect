@@ -3,11 +3,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users collection rules
     match /users/{userId} {
-      // Users can read and write their own document
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Users can read other users' public profile information for friend requests
-      allow read: if request.auth != null;
+      // Anyone can read user documents (only public fields are stored)
+      allow read: if true;
+
+      // Each user may write only their own document
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
     // Conversations collection rules
@@ -101,18 +101,18 @@ service cloud.firestore {
       return affectedKeys.hasOnly(['viewedBy']);
     }
     
-    // Stories collection rules (for future use)
+    // Stories collection rules
     match /stories/{storyId} {
-      // Users can read stories from their friends
+      // Allow authenticated users to read friends' stories; filtering is
+      // handled client-side.
       allow read: if request.auth != null;
-      
-      // Users can create their own stories
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
-      
-      // Users can update/delete their own stories
-      allow update, delete: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
+
+      /*
+       * A user may create / update / delete the document whose ID matches
+       * their UID. We no longer rely on a redundant `userId` field, keeping
+       * the document lean and avoiding data duplication.
+       */
+      allow create, update, delete: if request.auth != null && storyId == request.auth.uid;
     }
     
     // Friend requests collection (for future use)

@@ -7,6 +7,7 @@ class UserModel {
   final String id;
   final String email;
   final String username;
+  final String displayName;
   final String bio;
   final List<String> interestTags;
   final DateTime createdAt;
@@ -16,6 +17,7 @@ class UserModel {
     required this.id,
     required this.email,
     required this.username,
+    required this.displayName,
     required this.bio,
     required this.interestTags,
     required this.createdAt,
@@ -32,6 +34,7 @@ class UserModel {
       id: snapshot.id,
       email: data['email'] as String,
       username: data['username'] as String,
+      displayName: data['display_name'] as String? ?? '',
       bio: data['bio'] as String,
       interestTags: List<String>.from(data['interest_tags'] as List),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
@@ -44,6 +47,7 @@ class UserModel {
     return {
       'email': email,
       'username': username,
+      'display_name': displayName,
       'bio': bio,
       'interest_tags': interestTags,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -55,6 +59,7 @@ class UserModel {
   UserModel copyWith({
     String? email,
     String? username,
+    String? displayName,
     String? bio,
     List<String>? interestTags,
     DateTime? updatedAt,
@@ -63,6 +68,7 @@ class UserModel {
       id: id,
       email: email ?? this.email,
       username: username ?? this.username,
+      displayName: displayName ?? this.displayName,
       bio: bio ?? this.bio,
       interestTags: interestTags ?? this.interestTags,
       createdAt: createdAt,

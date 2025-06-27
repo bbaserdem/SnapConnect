@@ -95,6 +95,7 @@ class AuthRepository {
     required String email,
     required String password,
     required String username,
+    required String displayName,
   }) async {
     try {
       // First check if username is available (this also validates format)
@@ -119,7 +120,8 @@ class AuthRepository {
         await _createUserDocument(
           uid: userCredential.user!.uid,
           email: email,
-          username: username, // _createUserDocument will normalize it
+          username: username,
+          displayName: displayName,
         );
         
         ErrorHandler.logSuccess('user sign up', additionalInfo: {
@@ -320,6 +322,7 @@ class AuthRepository {
     required String uid,
     required String email,
     required String username,
+    required String displayName,
   }) async {
     // Normalize username for storage
     final normalizedUsername = username.toLowerCase().trim();
@@ -328,6 +331,7 @@ class AuthRepository {
       await firestore.collection('users').doc(uid).set({
         'email': email,
         'username': normalizedUsername,
+        'display_name': displayName.trim(),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'bio': '',

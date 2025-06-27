@@ -56,6 +56,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
     _setupAutoAdvance(media);
 
+    final relativeTime = _formatRelativeTime(media.postedAt);
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -72,6 +74,21 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
           children: [
             Positioned.fill(child: _buildMedia(media)),
             _buildProgressBar(storyDoc.media.length),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 28,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  relativeTime,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
               left: 16,
@@ -167,5 +184,13 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     if (_currentIndex > 0) {
       setState(() => _currentIndex--);
     }
+  }
+
+  String _formatRelativeTime(DateTime postedAt) {
+    final diff = DateTime.now().difference(postedAt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 } 

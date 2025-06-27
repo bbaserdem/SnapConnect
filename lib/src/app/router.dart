@@ -26,7 +26,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/stories',
     redirect: (context, state) {
       // Get the current auth state synchronously
       final user = authState.valueOrNull;

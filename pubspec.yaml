@@ -142,9 +142,8 @@ flutter:
 flutter_launcher_icons:
   # Generate icons for both Android and iOS
   android: true
-  ios: true
-  remove_alpha_ios: true
+  ios: false
   # Source icon (highest-res png). SVG not yet fully supported by the tool.
-  image_path: "assets/logo_192x192.png"
-  adaptive_icon_foreground: "assets/logo_192x192.png"
-  adaptive_icon_background: "#FFFFFF"
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#02414C"

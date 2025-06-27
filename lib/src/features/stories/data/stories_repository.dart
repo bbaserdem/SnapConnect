@@ -103,9 +103,11 @@ class StoriesRepository {
     );
 
     // Update Firestore with `arrayUnion` & updatedAt.
+    final now = DateTime.now().toUtc();
     await _storiesCol.doc(uid).set({
       'media': FieldValue.arrayUnion([media.toMap()]),
-      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': Timestamp.fromDate(now),
+      'expiresAt': Timestamp.fromDate(now.add(const Duration(hours: 24))), // TTL field
     }, SetOptions(merge: true));
 
     return media;

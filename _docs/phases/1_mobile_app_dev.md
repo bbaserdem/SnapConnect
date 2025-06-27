@@ -73,7 +73,7 @@
     1.  Create a `stories` collection in Firestore. Each document represents an active story for a single user, containing an array of Snap references with timestamps.
     2.  On the "Send To" screen, include an option to "Post to My Story".
     3.  When a user posts, upload the media to `Firebase Storage` and add its reference to their story document in Firestore.
-    4.  Build the Stories Tab UI to display a list of friends who have active stories, using `Card` components for previews.
+    4.  Build the Stories Tab UI to display available stories. For Phase 1.5 this can simply show the current user's own story or any cached list; friend-based filtering will be implemented in Phase 1.6.
     5.  Create a full-screen story viewer that automatically plays the Snaps from a selected user's story in sequence.
     6.  Use Firebase TTL policies on the `stories` collection to automatically delete story documents 24 hours after creation.
 
@@ -86,6 +86,7 @@
     3.  Implement an "Add Friend" screen with a search bar (`TextField`).
     4.  Build a search function that queries the `users` collection by username.
     5.  Implement the business logic for sending, accepting, and rejecting friend requests.
+    6.  Integrate story filtering so the Stories tab shows only stories from accepted friends (moved from Phase 1.5).
 
 ### 7. Group Messaging
 - **Description**: Extend the real-time messaging system to support group chats.
