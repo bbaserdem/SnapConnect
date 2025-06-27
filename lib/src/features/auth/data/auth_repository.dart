@@ -1,6 +1,8 @@
 /// Authentication repository that handles all authentication-related operations
 /// using Firebase Authentication and Firestore for user data management.
 
+// ignore_for_file: unused_element
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

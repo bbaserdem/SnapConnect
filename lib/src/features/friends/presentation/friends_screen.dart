@@ -3,6 +3,8 @@
 /// This screen allows users to view their current friends list,
 /// search for new friends, and manage friend requests.
 
+/// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';

@@ -10,8 +10,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:video_player/video_player.dart';
 
-import '../../../config/constants.dart';
 import '../../../widgets/send_to_bottom_sheet.dart';
+import 'snap_editing_controls.dart';
 
 /// Snap edit screen widget
 class SnapEditScreen extends ConsumerStatefulWidget {
@@ -158,7 +158,19 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: _buildEditingControls(theme),
+            child: SnapEditingControls(
+              isPicture: widget.mediaCapture.isPicture,
+              snapDuration: _snapDuration,
+              onSnapDurationChange: (v) => setState(() => _snapDuration = v),
+              keepInChat: _keepInChat,
+              onToggleKeepInChat: () => setState(() => _keepInChat = !_keepInChat),
+              onEnterTextMode: () {
+                setState(() => _isTextMode = true);
+                _textFocusNode.requestFocus();
+              },
+              onShowColorPicker: _showColorPicker,
+              onShowSizePicker: _showSizePicker,
+            ),
           ),
 
           // Text input overlay (when in text mode)
@@ -208,98 +220,6 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
         );
       }
     }
-  }
-
-  /// Build editing controls at the bottom
-  Widget _buildEditingControls(ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + 16,
-        top: 16,
-        left: 16,
-        right: 16,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.8),
-            Colors.transparent,
-          ],
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Duration slider (for photos only)
-          if (widget.mediaCapture.isPicture)
-            Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.timer, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'View for ${_snapDuration}s',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-                Slider(
-                  value: _snapDuration.toDouble(),
-                  min: AppConstants.minSnapDuration.toDouble(),
-                  max: AppConstants.maxSnapDuration.toDouble(),
-                  divisions: AppConstants.maxSnapDuration - AppConstants.minSnapDuration,
-                  onChanged: (value) {
-                    setState(() {
-                      _snapDuration = value.round();
-                    });
-                  },
-                  activeColor: theme.colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-
-          // Editing tool buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildEditButton(
-                icon: Icons.text_fields,
-                label: 'Text',
-                onPressed: () {
-                  setState(() {
-                    _isTextMode = true;
-                  });
-                  _textFocusNode.requestFocus();
-                },
-              ),
-              _buildEditButton(
-                icon: Icons.palette,
-                label: 'Color',
-                onPressed: _showColorPicker,
-              ),
-              _buildEditButton(
-                icon: Icons.format_size,
-                label: 'Size',
-                onPressed: _showSizePicker,
-              ),
-              _buildEditButton(
-                icon: _keepInChat ? Icons.all_inclusive : Icons.timer,
-                label: _keepInChat ? '∞' : '${_snapDuration}s',
-                onPressed: () {
-                  setState(() {
-                    _keepInChat = !_keepInChat;
-                  });
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   /// Build text input overlay
@@ -357,38 +277,6 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build edit button widget
-  Widget _buildEditButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-            ),
           ),
         ],
       ),

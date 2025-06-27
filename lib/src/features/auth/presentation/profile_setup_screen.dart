@@ -45,7 +45,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   Future<void> _ensureNeedsSetup() async {
-    final user = WidgetsBinding.instance.scheduleFrameCallback((_){}); // placeholder to avoid lint
+    // Placeholder for future logic – currently not used.
   }
 
   @override

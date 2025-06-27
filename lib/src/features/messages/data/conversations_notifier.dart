@@ -11,7 +11,6 @@ import 'package:flutter/foundation.dart';
 import 'conversation_model.dart';
 import 'messaging_repository.dart';
 import '../../../common/utils/error_handler.dart';
-import '../../auth/auth.dart';
 
 /// State class for conversations
 class ConversationsState {

@@ -54,7 +54,7 @@ class ConversationTile extends StatelessWidget {
           style: TextStyle(
             color: hasUnread
                 ? colorScheme.onSurface
-                : colorScheme.onSurface.withOpacity(0.6),
+                : colorScheme.onSurface.withValues(alpha: 153),
             fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
           ),
           maxLines: 1,
@@ -129,7 +129,7 @@ class ConversationTile extends StatelessWidget {
           Text(
             timeago.format(lastMessageTime, locale: 'en_short'),
             style: TextStyle(
-              color: hasUnread ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.6),
+              color: hasUnread ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 153),
               fontSize: 12,
               fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
             ),

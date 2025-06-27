@@ -8,8 +8,6 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart' as ff;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -19,6 +17,9 @@ import 'conversation_model.dart';
 import 'cached_conversation.dart';
 import 'cached_message.dart';
 import '../../../common/utils/error_handler.dart';
+import 'media_upload_service.dart';
+import 'local_cache_service.dart';
+import 'conversation_service.dart';
 
 /// Provider for the messaging repository
 final messagingRepositoryProvider = Provider<MessagingRepository>((ref) {
@@ -29,39 +30,23 @@ final messagingRepositoryProvider = Provider<MessagingRepository>((ref) {
   );
 });
 
-/// Provider for the Isar database instance
-final isarProvider = FutureProvider<Isar>((ref) async {
-  final dir = await getApplicationDocumentsDirectory();
-  return await Isar.open(
-    [CachedConversationSchema, CachedMessageSchema],
-    directory: dir.path,
-  );
-});
-
 /// Repository class that handles all messaging operations
 class MessagingRepository {
   final ff.FirebaseFirestore firestore;
   final FirebaseStorage storage;
   final FirebaseAuth auth;
+  final MediaUploadService _mediaService;
+  final LocalCacheService _cacheService;
+  final ConversationService _conversationService;
   final Uuid _uuid = const Uuid();
-
-  Isar? _isar;
 
   MessagingRepository({
     required this.firestore,
     required this.storage,
     required this.auth,
-  });
-
-  /// Initialize the Isar database
-  Future<void> initializeIsar() async {
-    if (_isar != null) return;
-    final dir = await getApplicationDocumentsDirectory();
-    _isar = await Isar.open(
-      [CachedConversationSchema, CachedMessageSchema],
-      directory: dir.path,
-    );
-  }
+  })  : _mediaService = MediaUploadService(storage: storage),
+        _cacheService = LocalCacheService(),
+        _conversationService = ConversationService(firestore: firestore, auth: auth);
 
   /// Get current user ID
   String? get currentUserId => auth.currentUser?.uid;
@@ -100,7 +85,7 @@ class MessagingRepository {
       debugPrint('Successfully parsed ${conversations.length} conversations');
 
       // Cache conversations locally
-      _cacheConversations(conversations);
+      _cacheService.cacheConversations(conversations);
 
       return conversations;
     }).handleError((error) {
@@ -112,11 +97,7 @@ class MessagingRepository {
 
   /// Get cached conversations from Isar
   Future<List<CachedConversation>> getCachedConversations() async {
-    await initializeIsar();
-    return await _isar!.cachedConversations
-        .where()
-        .sortByLastMessageTimestampDesc()
-        .findAll();
+    return _cacheService.getCachedConversations();
   }
 
   /// Stream of messages for a conversation
@@ -133,7 +114,7 @@ class MessagingRepository {
           .toList();
 
       // Cache messages locally
-      _cacheMessages(messages);
+      _cacheService.cacheMessages(messages);
 
       // Clean up expired messages
       _cleanupExpiredMessages(messages);
@@ -144,81 +125,18 @@ class MessagingRepository {
 
   /// Get cached messages for a conversation
   Future<List<CachedMessage>> getCachedMessages(String conversationId) async {
-    await initializeIsar();
-    return await _isar!.cachedMessages
-        .where()
-        .conversationIdEqualTo(conversationId)
-        .sortBySentAtDesc()
-        .limit(50)
-        .findAll();
+    return _cacheService.getCachedMessages(conversationId);
   }
 
   /// Create or get a direct conversation between two users
   Future<ConversationModel> createOrGetDirectConversation({
     required String otherUserId,
     required String otherUsername,
-  }) async {
-    final userId = currentUserId;
-    if (userId == null) {
-      throw Exception('User not authenticated');
-    }
-
-    try {
-      final conversationId = ConversationModel.generateDirectConversationId(
-        userId,
-        otherUserId,
-      );
-
-      // Check if conversation already exists
-      final existingDoc = await firestore
-          .collection('conversations')
-          .doc(conversationId)
-          .get();
-
-      if (existingDoc.exists) {
-        return ConversationModel.fromFirestore(existingDoc);
-      }
-
-      // Get current user data
-      final currentUserDoc = await firestore
-          .collection('users')
-          .doc(userId)
-          .get();
-      
-      final currentUsername = currentUserDoc.data()?['username'] as String? ?? 'Unknown';
-
-      // Create new conversation
-      final now = DateTime.now();
-      final conversationData = ConversationModel(
-        id: conversationId,
-        participantIds: [userId, otherUserId],
-        participantUsernames: {
-          userId: currentUsername,
-          otherUserId: otherUsername,
-        },
-        isGroup: false,
-        lastViewedTimestamps: {
-          userId: now,
-          otherUserId: now,
-        },
-        unreadCounts: {
-          userId: 0,
-          otherUserId: 0,
-        },
-        createdAt: now,
-        updatedAt: now,
-      );
-
-      await firestore
-          .collection('conversations')
-          .doc(conversationId)
-          .set(conversationData.toFirestore());
-
-      return conversationData;
-    } catch (e) {
-      ErrorHandler.logError('create or get direct conversation', e);
-      throw Exception('Failed to create conversation: ${e.toString()}');
-    }
+  }) {
+    return _conversationService.createOrGetDirectConversation(
+      otherUserId: otherUserId,
+      otherUsername: otherUsername,
+    );
   }
 
   /// Send a text message
@@ -259,7 +177,7 @@ class MessagingRepository {
           .set(message.toFirestore());
 
       // Update conversation's last message
-      await _updateConversationLastMessage(
+      await _conversationService.updateLastMessage(
         conversationId: conversationId,
         lastMessageId: messageId,
         lastMessageContent: content,
@@ -267,7 +185,7 @@ class MessagingRepository {
         lastMessageTimestamp: now,
       );
 
-      await _incrementUnreadCounts(conversationId, userId);
+      await _conversationService.incrementUnreadCounts(conversationId, userId);
 
       return message;
     } catch (e) {
@@ -291,11 +209,11 @@ class MessagingRepository {
 
     try {
       // Upload media to Firebase Storage
-      final mediaUrl = await _uploadMedia(mediaFile, type);
+      final mediaUrl = await _mediaService.uploadMedia(file: mediaFile, type: type);
       String? thumbnailUrl;
       
       if (thumbnailFile != null) {
-        thumbnailUrl = await _uploadMedia(thumbnailFile, MessageType.image);
+        thumbnailUrl = await _mediaService.uploadMedia(file: thumbnailFile, type: MessageType.image);
       }
 
       // Get user data
@@ -337,7 +255,7 @@ class MessagingRepository {
               ? '🖼️ Photo'
               : '🎥 Video';
 
-      await _updateConversationLastMessage(
+      await _conversationService.updateLastMessage(
         conversationId: conversationId,
         lastMessageId: messageId,
         lastMessageContent: lastMessageContent,
@@ -345,7 +263,7 @@ class MessagingRepository {
         lastMessageTimestamp: now,
       );
 
-      await _incrementUnreadCounts(conversationId, userId);
+      await _conversationService.incrementUnreadCounts(conversationId, userId);
 
       return message;
     } catch (e) {
@@ -366,116 +284,6 @@ class MessagingRepository {
     }
   }
 
-  /// Upload media file to Firebase Storage
-  Future<String> _uploadMedia(File file, MessageType type) async {
-    try {
-      if (!await file.exists()) {
-        throw Exception('Local media file not found at ${file.path}');
-      }
-
-      final fileName = '${_uuid.v4()}.${_getFileExtension(type)}';
-      final ref = storage.ref().child('messages').child(fileName);
-
-      final metadata = SettableMetadata(contentType: _getContentType(type));
-
-      final snapshot = await ref.putFile(file, metadata);
-
-      return await snapshot.ref.getDownloadURL();
-    } catch (e) {
-      ErrorHandler.logError('upload media', e);
-      throw Exception('Failed to upload media: ${e.toString()}');
-    }
-  }
-
-  /// Resolve proper MIME type for upload
-  String _getContentType(MessageType type) {
-    switch (type) {
-      case MessageType.image:
-      case MessageType.snap:
-        return 'image/jpeg';
-      case MessageType.video:
-        return 'video/mp4';
-      default:
-        return 'application/octet-stream';
-    }
-  }
-
-  /// Get file extension for message type
-  String _getFileExtension(MessageType type) {
-    switch (type) {
-      case MessageType.image:
-      case MessageType.snap:
-        return 'jpg';
-      case MessageType.video:
-        return 'mp4';
-      default:
-        return 'dat';
-    }
-  }
-
-  /// Update conversation's last message information
-  Future<void> _updateConversationLastMessage({
-    required String conversationId,
-    required String lastMessageId,
-    required String lastMessageContent,
-    required String lastMessageSenderId,
-    required DateTime lastMessageTimestamp,
-  }) async {
-    try {
-      await firestore.collection('conversations').doc(conversationId).update({
-        'lastMessageId': lastMessageId,
-        'lastMessageContent': lastMessageContent,
-        'lastMessageSenderId': lastMessageSenderId,
-        'lastMessageTimestamp': ff.Timestamp.fromDate(lastMessageTimestamp),
-        'updatedAt': ff.FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      ErrorHandler.logError('update conversation last message', e);
-    }
-  }
-
-  /// Cache conversations locally
-  Future<void> _cacheConversations(List<ConversationModel> conversations) async {
-    try {
-      await initializeIsar();
-      if (_isar == null) return;
-
-      final cachedConversations = conversations
-          .map((conv) => CachedConversation.fromConversationModel(conv))
-          .toList();
-
-      await _isar!.writeTxn(() async {
-        // Use upsert to avoid "Unique index violated" when the same
-        // conversation gets cached concurrently.
-        for (final conv in cachedConversations) {
-          await _isar!.cachedConversations.put(conv);
-        }
-      });
-    } catch (e) {
-      ErrorHandler.logError('cache conversations', e);
-    }
-  }
-
-  /// Cache messages locally
-  Future<void> _cacheMessages(List<MessageModel> messages) async {
-    try {
-      await initializeIsar();
-      if (_isar == null) return;
-
-      final cachedMessages = messages
-          .map((msg) => CachedMessage.fromMessageModel(msg))
-          .toList();
-
-      await _isar!.writeTxn(() async {
-        for (final msg in cachedMessages) {
-          await _isar!.cachedMessages.put(msg);
-        }
-      });
-    } catch (e) {
-      ErrorHandler.logError('cache messages', e);
-    }
-  }
-
   /// Clean up expired messages
   Future<void> _cleanupExpiredMessages(List<MessageModel> messages) async {
     final uid = currentUserId;
@@ -488,23 +296,6 @@ class MessagingRepository {
     
     for (final message in expiredMessages) {
       await _deleteMessage(message);
-    }
-  }
-
-  /// Schedule message deletion for disappearing messages
-  void _scheduleMessageDeletion(MessageModel message) {
-    if (!message.isDisappearing) return;
-    // Skip snaps – they persist until storage TTL removes media.
-    if (message.type == MessageType.snap) return;
-
-    // For other disappearing messages, wait until expiration
-    if (message.expiresAt != null) {
-      final delay = message.expiresAt!.difference(DateTime.now());
-      if (delay.isNegative) {
-        _deleteMessage(message);
-      } else {
-        Timer(delay, () => _deleteMessage(message));
-      }
     }
   }
 
@@ -538,15 +329,7 @@ class MessagingRepository {
       });
 
       // Remove from local cache
-      await initializeIsar();
-      if (_isar != null) {
-        await _isar!.writeTxn(() async {
-          await _isar!.cachedMessages
-              .where()
-              .messageIdEqualTo(message.id)
-              .deleteAll();
-        });
-      }
+      await _cacheService.removeMessageById(message.id);
     } catch (e) {
       ErrorHandler.logError('delete message', e);
     }
@@ -555,13 +338,7 @@ class MessagingRepository {
   /// Clear local cache
   Future<void> clearLocalCache() async {
     try {
-      await initializeIsar();
-      if (_isar == null) return;
-
-      await _isar!.writeTxn(() async {
-        await _isar!.cachedConversations.clear();
-        await _isar!.cachedMessages.clear();
-      });
+      await _cacheService.clear();
     } catch (e) {
       ErrorHandler.logError('clear local cache', e);
     }
@@ -608,94 +385,21 @@ class MessagingRepository {
     required String groupName,
     required List<String> participantIds,
     required Map<String, String> participantUsernames,
-  }) async {
-    final userId = currentUserId;
-    if (userId == null) {
-      throw Exception('User not authenticated');
-    }
-
-    // Ensure creator is in the participant list
-    final uniqueIds = <String>{...participantIds, userId}.toList();
-
-    if (uniqueIds.length < 2) {
-      throw Exception('Group must contain at least two members');
-    }
-    if (uniqueIds.length > 10) {
-      throw Exception('Group can contain at most 10 participants');
-    }
-
-    // Add creator username if missing
-    final usernames = Map<String, String>.from(participantUsernames);
-    if (!usernames.containsKey(userId)) {
-      // Fetch current user username
-      final doc = await firestore.collection('users').doc(userId).get();
-      usernames[userId] = doc.data()?['username'] as String? ?? 'Unknown';
-    }
-
-    // Ensure all ids have username entry
-    for (final id in uniqueIds) {
-      usernames[id] = usernames[id] ?? 'Unknown';
-    }
-
-    final conversationId = _uuid.v4();
-    final now = DateTime.now();
-
-    final conversation = ConversationModel(
-      id: conversationId,
-      participantIds: uniqueIds,
-      participantUsernames: usernames,
-      isGroup: true,
-      groupName: groupName.trim(),
-      lastViewedTimestamps: {for (var id in uniqueIds) id: now},
-      unreadCounts: {for (var id in uniqueIds) id: 0},
-      createdAt: now,
-      updatedAt: now,
-      deletedFor: [],
+  }) {
+    return _conversationService.createGroupConversation(
+      groupName: groupName,
+      participantIds: participantIds,
+      participantUsernames: participantUsernames,
     );
-
-    await firestore
-        .collection('conversations')
-        .doc(conversationId)
-        .set(conversation.toFirestore());
-
-    return conversation;
   }
 
   /// Leave a conversation (direct or group). Adds current uid to deletedFor array.
-  Future<void> leaveConversation(String conversationId) async {
-    final uid = currentUserId;
-    if (uid == null) throw Exception('User not authenticated');
-    try {
-      await firestore.collection('conversations').doc(conversationId).update({
-        'deletedFor': ff.FieldValue.arrayUnion([uid]),
-        'updatedAt': ff.FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      ErrorHandler.logError('leave conversation', e);
-      rethrow;
-    }
+  Future<void> leaveConversation(String conversationId) {
+    return _conversationService.leaveConversation(conversationId);
   }
 
   /// Internal helper to determine if a conversation is visible for current user
   bool _isVisibleConversation(ConversationModel conv, String uid) {
     return !conv.deletedFor.contains(uid);
-  }
-
-  Future<void> _incrementUnreadCounts(String conversationId, String senderId) async {
-    await firestore.runTransaction((txn) async {
-      final convRef = firestore.collection('conversations').doc(conversationId);
-      final snapshot = await txn.get(convRef);
-      if (!snapshot.exists) return;
-      final data = snapshot.data()!;
-      final currentCounts = Map<String, dynamic>.from(data['unreadCounts'] ?? {});
-      for (final uid in (data['participantIds'] as List)) {
-        if (uid == senderId) continue;
-        final current = (currentCounts[uid] as int?) ?? 0;
-        currentCounts[uid] = current + 1;
-      }
-      txn.update(convRef, {
-        'unreadCounts': currentCounts,
-      });
-    });
   }
 } 
