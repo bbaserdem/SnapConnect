@@ -72,7 +72,7 @@ class StoriesScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildStoriesGrid(context, storiesState),
+                  _buildStoriesGrid(context, ref, storiesState),
                 ],
               ),
             ),
@@ -118,22 +118,13 @@ class StoriesScreen extends ConsumerWidget {
   }
 
   /// Builds the grid of friends' stories
-  Widget _buildStoriesGrid(BuildContext context, StoriesState storiesState) {
-    if (storiesState.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  Widget _buildStoriesGrid(BuildContext context, WidgetRef ref, StoriesState storiesState) {
+    final currentUid = ref.read(authUserProvider).value?.uid;
+    final friendStories = currentUid == null
+        ? storiesState.stories
+        : storiesState.stories.where((s) => s.userId != currentUid).toList();
 
-    if (storiesState.error != null) {
-      return Center(
-        child: Text(
-          storiesState.error!,
-          style: const TextStyle(color: Colors.red),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
-    if (storiesState.stories.isEmpty) {
+    if (friendStories.isEmpty) {
       return const Center(child: Text('No stories yet'));
     }
 
@@ -146,9 +137,9 @@ class StoriesScreen extends ConsumerWidget {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: storiesState.stories.length,
+      itemCount: friendStories.length,
       itemBuilder: (context, index) {
-        final storyDoc = storiesState.stories[index];
+        final storyDoc = friendStories[index];
         final lastMedia = storyDoc.media.isNotEmpty ? storyDoc.media.last : null;
         final postedAt = lastMedia?.postedAt ?? storyDoc.updatedAt;
         final timeDiff = DateTime.now().difference(postedAt);

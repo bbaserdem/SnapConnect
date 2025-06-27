@@ -135,26 +135,42 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
   /// Builds the friend requests list tab
   Widget _buildRequestsList(FriendsState state) {
     final incoming = state.incoming;
+    final outgoing = state.outgoing;
 
-    if (state.isLoading && incoming.isEmpty) {
+    if (state.isLoading && incoming.isEmpty && outgoing.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (incoming.isEmpty) {
+    if (incoming.isEmpty && outgoing.isEmpty) {
       return const Center(child: Text('No friend requests'));
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: incoming.length,
-      itemBuilder: (context, index) {
-        final req = incoming[index];
-        return _RequestTile(
-          uid: req.friendUid,
-          onAccept: () => ref.read(friendsProvider.notifier).acceptRequest(req.friendUid),
-          onDecline: () => ref.read(friendsProvider.notifier).removeRelationship(req.friendUid),
-        );
-      },
+      children: [
+        if (incoming.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('Incoming', style: Theme.of(context).textTheme.labelLarge),
+          ),
+          ...incoming.map((req) => _RequestTile(
+                uid: req.friendUid,
+                onAccept: () => ref.read(friendsProvider.notifier).acceptRequest(req.friendUid),
+                onDecline: () => ref.read(friendsProvider.notifier).removeRelationship(req.friendUid),
+              )),
+          const SizedBox(height: 12),
+        ],
+        if (outgoing.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('Sent', style: Theme.of(context).textTheme.labelLarge),
+          ),
+          ...outgoing.map((req) => _PendingTile(
+                uid: req.friendUid,
+                onCancel: () => ref.read(friendsProvider.notifier).removeRelationship(req.friendUid),
+              )),
+        ],
+      ],
     );
   }
 
@@ -164,6 +180,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
       builder: (context, setStateSB) {
         final suggestions = ref.watch(usernameSearchProvider(query));
         final acceptedIds = ref.watch(acceptedFriendIdsProvider);
+        final pendingIds = ref.watch(friendsProvider).outgoing.map((e) => e.friendUid).toSet();
 
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -192,21 +209,24 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
                       itemBuilder: (context, index) {
                         final item = list[index];
                         final isFriend = acceptedIds.contains(item.uid);
+                        final isPending = pendingIds.contains(item.uid);
                         return ListTile(
                           leading: CircleAvatar(child: Text(item.username[0].toUpperCase())),
                           title: Text(item.displayName.isNotEmpty ? item.displayName : item.username),
                           subtitle: Text('@${item.username}'),
                           trailing: isFriend
                               ? const Icon(Icons.check, color: Colors.green)
-                              : IconButton(
-                                  icon: const Icon(Icons.person_add),
-                                  onPressed: () async {
-                                    await ref.read(friendsProvider.notifier).sendRequest(item.uid);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Friend request sent to ${item.username}')),
-                                    );
-                                  },
-                                ),
+                              : isPending
+                                  ? const Icon(Icons.hourglass_top_rounded, color: Colors.orange)
+                                  : IconButton(
+                                      icon: const Icon(Icons.person_add),
+                                      onPressed: () async {
+                                        await ref.read(friendsProvider.notifier).sendRequest(item.uid);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Friend request sent to ${item.username}')),
+                                        );
+                                      },
+                                    ),
                         );
                       },
                     );
@@ -318,6 +338,43 @@ class _RequestTile extends ConsumerWidget {
                 IconButton(icon: const Icon(Icons.check, color: Colors.green), onPressed: onAccept),
                 IconButton(icon: const Icon(Icons.close, color: Colors.red), onPressed: onDecline),
               ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Outgoing request (pending) tile
+class _PendingTile extends ConsumerWidget {
+  final String uid;
+  final VoidCallback onCancel;
+
+  const _PendingTile({required this.uid, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(publicUserProvider(uid));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return userAsync.when(
+      loading: () => const ListTile(title: Text('Loading...')),
+      error: (err, _) => ListTile(title: Text(uid)),
+      data: (user) {
+        final avatarText = user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: colorScheme.primaryContainer,
+              child: Text(avatarText, style: TextStyle(color: colorScheme.onPrimaryContainer)),
+            ),
+            title: Text(user.displayName.isNotEmpty ? user.displayName : user.username),
+            subtitle: Text('@${user.username} • Pending'),
+            trailing: IconButton(
+              icon: const Icon(Icons.cancel),
+              onPressed: onCancel,
             ),
           ),
         );

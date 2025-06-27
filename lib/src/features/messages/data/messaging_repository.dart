@@ -445,7 +445,11 @@ class MessagingRepository {
           .toList();
 
       await _isar!.writeTxn(() async {
-        await _isar!.cachedConversations.putAll(cachedConversations);
+        // Use upsert to avoid "Unique index violated" when the same
+        // conversation gets cached concurrently.
+        for (final conv in cachedConversations) {
+          await _isar!.cachedConversations.put(conv);
+        }
       });
     } catch (e) {
       ErrorHandler.logError('cache conversations', e);
@@ -463,7 +467,9 @@ class MessagingRepository {
           .toList();
 
       await _isar!.writeTxn(() async {
-        await _isar!.cachedMessages.putAll(cachedMessages);
+        for (final msg in cachedMessages) {
+          await _isar!.cachedMessages.put(msg);
+        }
       });
     } catch (e) {
       ErrorHandler.logError('cache messages', e);
@@ -472,7 +478,13 @@ class MessagingRepository {
 
   /// Clean up expired messages
   Future<void> _cleanupExpiredMessages(List<MessageModel> messages) async {
-    final expiredMessages = messages.where((msg) => msg.hasExpired && !msg.isExpired).toList();
+    final uid = currentUserId;
+    final expiredMessages = messages.where((msg) =>
+        msg.hasExpired &&
+        !msg.isExpired &&
+        msg.senderId == uid &&
+        msg.type != MessageType.snap // never auto-delete snaps; they rely on TTL
+    ).toList();
     
     for (final message in expiredMessages) {
       await _deleteMessage(message);
@@ -498,6 +510,8 @@ class MessagingRepository {
 
   /// Delete a message from Firestore and Storage
   Future<void> _deleteMessage(MessageModel message) async {
+    final uid = currentUserId;
+    if (uid != message.senderId) return; // only sender cleans up
     try {
       // Delete media from Storage if it exists
       if (message.mediaUrl != null) {

@@ -50,47 +50,47 @@ class FriendsState {
 }
 
 class FriendsNotifier extends StateNotifier<FriendsState> {
-  FriendsNotifier(this._repo, this._ref) : super(const FriendsState()) {
-    _init();
+  FriendsNotifier(this._repo, {required String? uid}) : super(const FriendsState()) {
+    _init(uid);
   }
 
   final FriendsRepository _repo;
-  final Ref _ref;
 
   StreamSubscription<List<String>>? _acceptedSub;
   StreamSubscription<List<FriendDoc>>? _incomingSub;
   StreamSubscription<List<FriendDoc>>? _outgoingSub;
 
-  Future<void> _init() async {
-    final user = await _ref.read(authUserProvider.future);
-    if (user == null) {
+  Future<void> _init(String? uid) async {
+    if (uid == null) {
       state = state.copyWith(error: 'Please sign in to manage friends');
       return;
     }
-
-    final uid = user.uid;
 
     state = state.copyWith(isLoading: true, error: null);
 
     _acceptedSub = _repo
         .acceptedFriendIdsStream(uid: uid)
-        .listen((ids) => state = state.copyWith(acceptedIds: ids, isLoading: false),
-            onError: (err) {
-      ErrorHandler.logError('accepted friends stream', err);
-      state = state.copyWith(isLoading: false, error: 'Failed to load friends');
-    });
+        .listen(
+      (ids) => state = state.copyWith(acceptedIds: ids, isLoading: false),
+      onError: (err) {
+        ErrorHandler.logError('accepted friends stream', err);
+        state = state.copyWith(isLoading: false, error: 'Failed to load friends');
+      },
+    );
 
     _incomingSub = _repo
         .incomingRequestsStream(uid: uid)
-        .listen((docs) => state = state.copyWith(incoming: docs), onError: (err) {
-      ErrorHandler.logError('incoming requests stream', err);
-    });
+        .listen(
+      (docs) => state = state.copyWith(incoming: docs),
+      onError: (err) => ErrorHandler.logError('incoming requests stream', err),
+    );
 
     _outgoingSub = _repo
         .outgoingRequestsStream(uid: uid)
-        .listen((docs) => state = state.copyWith(outgoing: docs), onError: (err) {
-      ErrorHandler.logError('outgoing requests stream', err);
-    });
+        .listen(
+      (docs) => state = state.copyWith(outgoing: docs),
+      onError: (err) => ErrorHandler.logError('outgoing requests stream', err),
+    );
   }
 
   /// Proxy methods to repository.
@@ -116,7 +116,8 @@ final friendsRepositoryProvider = Provider<FriendsRepository>((ref) {
 
 final friendsProvider = StateNotifierProvider<FriendsNotifier, FriendsState>((ref) {
   final repo = ref.watch(friendsRepositoryProvider);
-  return FriendsNotifier(repo, ref);
+  final user = ref.watch(authUserProvider).valueOrNull;
+  return FriendsNotifier(repo, uid: user?.uid);
 });
 
 /// Convenience provider exposing accepted friend ids only.

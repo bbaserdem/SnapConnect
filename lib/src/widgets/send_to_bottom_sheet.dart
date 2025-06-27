@@ -18,7 +18,7 @@ import '../features/friends/data/friends_notifier.dart';
 import '../features/profile/data/public_user_provider.dart';
 import '../features/auth/auth.dart';
 
-class SendToBottomSheet extends ConsumerWidget {
+class SendToBottomSheet extends ConsumerStatefulWidget {
   const SendToBottomSheet({
     required this.mediaPath,
     required this.isPicture,
@@ -33,7 +33,16 @@ class SendToBottomSheet extends ConsumerWidget {
   final bool keepInChat;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SendToBottomSheet> createState() => _SendToBottomSheetState();
+}
+
+class _SendToBottomSheetState extends ConsumerState<SendToBottomSheet> {
+  bool _isPostingStory = false;
+  String? _sendingTargetId; // convoId or friendUid being sent
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final conversationsState = ref.watch(conversationsProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final storiesRepo = ref.read(storiesRepositoryProvider);
@@ -99,33 +108,58 @@ class SendToBottomSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     ListTile(
+                      enabled: !_isPostingStory,
                       leading: CircleAvatar(
                         backgroundColor: colorScheme.primary,
-                        child: const Icon(Icons.auto_stories, color: Colors.white),
+                        child: _isPostingStory
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.auto_stories, color: Colors.white),
                       ),
                       title: const Text('My Story'),
                       onTap: () async {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Posting to your story...')),
+                        if (_isPostingStory) return;
+                        setState(() => _isPostingStory = true);
+
+                        // Show blocking dialog to indicate upload
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         );
 
                         try {
                           await storiesRepo.addStory(
-                            file: File(mediaPath),
-                            type: isPicture ? StoryMediaType.photo : StoryMediaType.video,
-                            duration: isPicture ? duration : null,
+                            file: File(widget.mediaPath),
+                            type: widget.isPicture ? StoryMediaType.photo : StoryMediaType.video,
+                            duration: widget.isPicture ? widget.duration : null,
                           );
+
+                          // Dismiss loading dialog first
+                          if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+
+                          // Close the sheet and the editor before showing success.
                           if (context.mounted) {
                             Navigator.of(context).pop(); // close sheet
                             Navigator.of(context).pop(); // close editor
                           }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Added to My Story')),
-                          );
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to add story: $e')),
-                          );
+                          if (context.mounted) {
+                            Navigator.of(context, rootNavigator: true).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to add story: $e')),
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => _isPostingStory = false);
                         }
                       },
                     ),
@@ -142,32 +176,41 @@ class SendToBottomSheet extends ConsumerWidget {
                             return others.isNotEmpty;
                           }).map((conv) {
                             final displayName = conv.getDisplayName(currentUid ?? '');
-                            final messageType = keepInChat
-                                ? (isPicture ? MessageType.image : MessageType.video)
-                                : (isPicture ? MessageType.snap : MessageType.video);
+                            final messageType = widget.keepInChat
+                                ? (widget.isPicture ? MessageType.image : MessageType.video)
+                                : (widget.isPicture ? MessageType.snap : MessageType.video);
                             final sender = ref.read(sendMediaMessageProvider(conv.id));
                             return ListTile(
                               leading: CircleAvatar(child: Text(displayName.isNotEmpty ? displayName[0] : '?')),
                               title: Text(displayName),
                               subtitle: Text(conv.isGroup ? 'Group chat' : 'Direct'),
+                              enabled: _sendingTargetId == null,
+                              trailing: _sendingTargetId == conv.id
+                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : null,
                               onTap: () async {
+                                if (_sendingTargetId != null) return;
+                                setState(() => _sendingTargetId = conv.id);
+                                final messenger = ScaffoldMessenger.of(context);
                                 try {
                                   await sender(
-                                    mediaPath: mediaPath,
+                                    mediaPath: widget.mediaPath,
                                     type: messageType,
-                                    duration: keepInChat ? null : duration,
+                                    duration: widget.keepInChat ? null : widget.duration,
                                   );
                                   if (context.mounted) {
                                     Navigator.of(context).pop(); // close sheet
                                     Navigator.of(context).pop(); // close editor
                                   }
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(content: Text('Sent to $displayName')),
                                   );
                                 } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(content: Text('Failed to send: $e')),
                                   );
+                                } finally {
+                                  if (mounted) setState(() => _sendingTargetId = null);
                                 }
                               },
                             );
@@ -182,7 +225,13 @@ class SendToBottomSheet extends ConsumerWidget {
                                 leading: CircleAvatar(child: Text(user.username.isNotEmpty ? user.username[0].toUpperCase() : '?')),
                                 title: Text(user.username),
                                 subtitle: user.displayName.isNotEmpty ? Text(user.displayName) : null,
+                                enabled: _sendingTargetId == null,
+                                trailing: _sendingTargetId == user.uid
+                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                    : null,
                                 onTap: () async {
+                                  if (_sendingTargetId != null) return;
+                                  setState(() => _sendingTargetId = user.uid);
                                   final messenger = ScaffoldMessenger.of(context);
                                   try {
                                     final conv = await ref.read(conversationsProvider.notifier).createOrGetDirectConversation(
@@ -193,13 +242,13 @@ class SendToBottomSheet extends ConsumerWidget {
                                       messenger.showSnackBar(const SnackBar(content: Text('Failed to create conversation')));
                                       return;
                                     }
-                                    final messageType = keepInChat
-                                        ? (isPicture ? MessageType.image : MessageType.video)
-                                        : (isPicture ? MessageType.snap : MessageType.video);
+                                    final messageType = widget.keepInChat
+                                        ? (widget.isPicture ? MessageType.image : MessageType.video)
+                                        : (widget.isPicture ? MessageType.snap : MessageType.video);
                                     await ref.read(sendMediaMessageProvider(conv.id))(
-                                      mediaPath: mediaPath,
+                                      mediaPath: widget.mediaPath,
                                       type: messageType,
-                                      duration: keepInChat ? null : duration,
+                                      duration: widget.keepInChat ? null : widget.duration,
                                     );
                                     if (context.mounted) {
                                       Navigator.of(context).pop();
@@ -208,6 +257,8 @@ class SendToBottomSheet extends ConsumerWidget {
                                     messenger.showSnackBar(SnackBar(content: Text('Sent to ${user.username}')));
                                   } catch (e) {
                                     messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+                                  } finally {
+                                    if (mounted) setState(() => _sendingTargetId = null);
                                   }
                                 },
                               );
