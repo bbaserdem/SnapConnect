@@ -4,10 +4,10 @@
 /// state management integration.
 
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io' show Platform;
 
 import 'firebase_options.dart';
 import 'src/app/app.dart';
@@ -19,8 +19,23 @@ Future<void> main() async {
   bool firebaseInitialized = false;
   
   try {
-    // Initialize Firebase only on supported platforms (not Linux)
-    if (defaultTargetPlatform != TargetPlatform.linux) {
+    // Initialize Firebase on all platforms.
+    if (Platform.isLinux) {
+      debugPrint('Initializing Firebase for Linux (using web options)...');
+
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.web,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Firebase initialization timed out - check network connection');
+        },
+      );
+
+      firebaseInitialized = true;
+      debugPrint('Firebase initialized successfully (Linux)');
+
+    } else {
       debugPrint('Initializing Firebase...');
       
       // Add timeout to prevent hanging on network issues
@@ -34,6 +49,8 @@ Future<void> main() async {
       );
 
       // Initialize App Check with debug provider for development
+      // DISABLED FOR DEVELOPMENT - Causes network issues in emulator
+      /*
       try {
         await FirebaseAppCheck.instance.activate(
           // Use debug provider for development
@@ -53,11 +70,11 @@ Future<void> main() async {
         debugPrint('App Check initialization failed: $appCheckError');
         // Continue without App Check for development
       }
+      */
+      debugPrint('App Check disabled for development');
 
       firebaseInitialized = true;
       debugPrint('Firebase initialized successfully');
-    } else {
-      debugPrint('Skipping Firebase initialization on Linux');
     }
   } catch (e) {
     debugPrint('Error initializing Firebase: $e');

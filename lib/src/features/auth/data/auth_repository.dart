@@ -103,9 +103,9 @@ class AuthRepository {
         throw Exception('Username is already taken. Please choose another.');
       }
 
-      // First, verify reCAPTCHA
+      // Disable reCAPTCHA verification for development/testing
       await auth.setSettings(
-        appVerificationDisabledForTesting: false, // Set to true only for testing
+        appVerificationDisabledForTesting: true, // Disabled for development
       );
 
       // Create the user with email and password
@@ -169,9 +169,9 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      // First, verify reCAPTCHA
+      // Disable reCAPTCHA verification for development/testing
       await auth.setSettings(
-        appVerificationDisabledForTesting: false, // Set to true only for testing
+        appVerificationDisabledForTesting: true, // Disabled for development
       );
 
       final userCredential = await auth.signInWithEmailAndPassword(

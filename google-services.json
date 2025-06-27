@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "589555525545",
+    "project_id": "snapconnect-bodymod",
+    "storage_bucket": "snapconnect-bodymod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:589555525545:android:a0c690196d0a872dae86b8",
+        "android_client_info": {
+          "package_name": "com.example.snapconnect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "589555525545-tam95qs6kjcb0c486carocdutkaeb3rq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA01gXxD11cCoe_4jmeQ26ub9y09I2yQn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "589555525545-tam95qs6kjcb0c486carocdutkaeb3rq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "589555525545-co42bnf0i5rdnj7g7eg87e3659a3t65b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.snapconnect"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

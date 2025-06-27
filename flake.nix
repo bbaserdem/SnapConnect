@@ -19,16 +19,18 @@
           config.allowUnfree = true;
           android_sdk.accept_license = true;
         };
+        cmakeVersion = "3.22.1";
+        buildToolsVersion = "33.0.2";
         androidEnv = pkgs.androidenv.override {licenseAccepted = true;};
         androidComposition = androidEnv.composeAndroidPackages {
           cmdLineToolsVersion = "8.0";
           platformToolsVersion = "34.0.4";
-          buildToolsVersions = ["33.0.2" "34.0.0" "35.0.0" "36.0.0"];
+          buildToolsVersions = [buildToolsVersion "34.0.0" "35.0.0" "36.0.0"];
           platformVersions = ["33" "34" "35" "36"];
           abiVersions = ["armeabi-v7a" "arm64-v8a" "x86_64"];
           includeNDK = true;
           ndkVersions = ["27.0.12077973"];
-          cmakeVersions = ["3.22.1"];
+          cmakeVersions = [cmakeVersion];
           includeSystemImages = true;
           systemImageTypes = ["google_apis" "google_apis_playstore"];
           includeEmulator = true;
@@ -70,10 +72,12 @@
           mkShell rec {
             ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
             ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+            ANDROID_NDK_ROOT = "${androidSdk}/libexec/android-sdk/ndk-bundle";
+            CMDLINE_TOOLS_ROOT = "${androidSdk}/libexec/android-sdk/cmdline-tools/8.0";
             JAVA_HOME = jdk17.home;
             FLUTTER_ROOT = flutter;
             DART_ROOT = "${flutter}/bin/cache/dart-sdk";
-            GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/33.0.2/aapt2";
+            GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/${buildToolsVersion}/aapt2";
             QT_QPA_PLATFORM = "wayland;xcb"; # emulator related: try using wayland, otherwise fall back to X.
             # NB: due to the emulator's bundled qt version, it currently does not start with QT_QPA_PLATFORM="wayland".
             # Maybe one day this will be supported.
@@ -94,6 +98,7 @@
               # Custom environments
               devPython
               androidSdk
+              gtk3
             ];
             # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
             LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [vulkan-loader libGL]}";
@@ -106,6 +111,12 @@
               else
                 export PATH="$PATH:$PUB_CACHE/bin"
               fi
+
+              # Add Android cmdline-tools to PATH for Flutter
+              export PATH="$PATH:${androidSdk}/libexec/android-sdk/cmdline-tools/8.0/bin"
+
+              # Add cmake to path
+              export PATH="$(echo "$ANDROID_HOME/cmake/${cmakeVersion}".*/bin):$PATH"
             '';
           };
       }

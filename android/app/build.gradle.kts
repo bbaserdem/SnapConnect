@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
+    // START: FlutterFire Configuration - TEMPORARILY DISABLED
+    // id("com.google.gms.google-services")
     // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -43,8 +43,8 @@ android {
 }
 
 dependencies {
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
+    // Import the Firebase BoM - TEMPORARILY DISABLED
+    // implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
 }
 
 flutter {
