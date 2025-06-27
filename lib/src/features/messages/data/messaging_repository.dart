@@ -278,7 +278,7 @@ class MessagingRepository {
     required String conversationId,
     required File mediaFile,
     required MessageType type,
-    required int duration,
+    int? duration,
     File? thumbnailFile,
   }) async {
     final userId = currentUserId;
@@ -302,7 +302,9 @@ class MessagingRepository {
       // Create message
       final messageId = _uuid.v4();
       final now = DateTime.now();
-      final expiresAt = now.add(Duration(seconds: duration));
+      final expiresAt = (type == MessageType.snap && duration != null && duration > 0)
+          ? now.add(Duration(seconds: duration))
+          : null;
       
       final message = MessageModel(
         id: messageId,
@@ -326,9 +328,9 @@ class MessagingRepository {
           .set(message.toFirestore());
 
       // Update conversation's last message
-      final lastMessageContent = type == MessageType.snap 
+      final lastMessageContent = type == MessageType.snap
           ? '📸 Snap'
-          : type == MessageType.image 
+          : type == MessageType.image
               ? '🖼️ Photo'
               : '🎥 Video';
 
@@ -374,16 +376,34 @@ class MessagingRepository {
   /// Upload media file to Firebase Storage
   Future<String> _uploadMedia(File file, MessageType type) async {
     try {
+      if (!await file.exists()) {
+        throw Exception('Local media file not found at ${file.path}');
+      }
+
       final fileName = '${_uuid.v4()}.${_getFileExtension(type)}';
       final ref = storage.ref().child('messages').child(fileName);
-      
-      final uploadTask = ref.putFile(file);
-      final snapshot = await uploadTask.whenComplete(() {});
-      
+
+      final metadata = SettableMetadata(contentType: _getContentType(type));
+
+      final snapshot = await ref.putFile(file, metadata);
+
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
       ErrorHandler.logError('upload media', e);
       throw Exception('Failed to upload media: ${e.toString()}');
+    }
+  }
+
+  /// Resolve proper MIME type for upload
+  String _getContentType(MessageType type) {
+    switch (type) {
+      case MessageType.image:
+      case MessageType.snap:
+        return 'image/jpeg';
+      case MessageType.video:
+        return 'video/mp4';
+      default:
+        return 'application/octet-stream';
     }
   }
 
@@ -505,8 +525,12 @@ class MessagingRepository {
         }
       }
 
-      // Delete message from Firestore
-      await firestore.collection('messages').doc(message.id).delete();
+      // Instead of deleting, mark as expired so bubble remains
+      await firestore.collection('messages').doc(message.id).update({
+        'isExpired': true,
+        'mediaUrl': null,
+        'thumbnailUrl': null,
+      });
 
       // Remove from local cache
       await initializeIsar();

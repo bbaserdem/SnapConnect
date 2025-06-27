@@ -5,6 +5,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../data/stories_notifier.dart';
+import '../data/story_model.dart';
 
 /// Main stories screen widget
 class StoriesScreen extends ConsumerWidget {
@@ -14,6 +17,7 @@ class StoriesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final storiesState = ref.watch(storiesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -59,7 +63,7 @@ class StoriesScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildStoriesGrid(context),
+                  _buildStoriesGrid(context, storiesState),
                 ],
               ),
             ),
@@ -140,7 +144,25 @@ class StoriesScreen extends ConsumerWidget {
   }
 
   /// Builds the grid of friends' stories
-  Widget _buildStoriesGrid(BuildContext context) {
+  Widget _buildStoriesGrid(BuildContext context, StoriesState storiesState) {
+    if (storiesState.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (storiesState.error != null) {
+      return Center(
+        child: Text(
+          storiesState.error!,
+          style: const TextStyle(color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    if (storiesState.stories.isEmpty) {
+      return const Center(child: Text('No stories yet'));
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -150,14 +172,21 @@ class StoriesScreen extends ConsumerWidget {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: 6, // Placeholder count
+      itemCount: storiesState.stories.length,
       itemBuilder: (context, index) {
+        final storyDoc = storiesState.stories[index];
+        final lastMedia = storyDoc.media.isNotEmpty ? storyDoc.media.last : null;
+        final postedAt = lastMedia?.postedAt ?? storyDoc.updatedAt;
+        final timeDiff = DateTime.now().difference(postedAt);
+        final timestamp = _formatTimestamp(timeDiff);
+
         return _buildStoryCard(
           context,
-          name: 'Friend ${index + 1}',
-          username: '@friend${index + 1}',
-          timestamp: _getStoryTimestamp(index),
-          hasNewStory: index % 2 == 0,
+          name: storyDoc.userId,
+          username: storyDoc.userId,
+          timestamp: timestamp,
+          hasNewStory: true,
+          storyDoc: storyDoc,
         );
       },
     );
@@ -170,6 +199,7 @@ class StoriesScreen extends ConsumerWidget {
     required String username,
     required String timestamp,
     required bool hasNewStory,
+    StoryDocument? storyDoc,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -309,25 +339,18 @@ class StoriesScreen extends ConsumerWidget {
     );
   }
 
-  /// Gets placeholder timestamp for a story
-  String _getStoryTimestamp(int index) {
-    final timestamps = [
-      '2h',
-      '4h',
-      '8h',
-      '12h',
-      '18h',
-      '20h',
-    ];
-    return timestamps[index % timestamps.length];
-  }
-
   /// Opens a story viewer (placeholder functionality)
   void _openStory(BuildContext context, String userName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening $userName\'s story (Feature coming in Phase 1.5)'),
-      ),
-    );
+    context.push('/story-viewer/$userName');
+  }
+
+  String _formatTimestamp(Duration diff) {
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h';
+    } else {
+      return '${diff.inDays}d';
+    }
   }
 } 

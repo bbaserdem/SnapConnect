@@ -28,6 +28,7 @@ class MessageModel {
   final List<String> viewedBy; // List of user IDs who have viewed this message
   final DateTime? expiresAt; // When the message should be deleted
   final bool isGroupMessage;
+  final bool isExpired; // indicates snap has disappeared but bubble remains
 
   const MessageModel({
     required this.id,
@@ -43,6 +44,7 @@ class MessageModel {
     required this.viewedBy,
     this.expiresAt,
     required this.isGroupMessage,
+    this.isExpired = false,
   });
 
   /// Create a MessageModel from a Firestore document
@@ -69,6 +71,7 @@ class MessageModel {
           ? (data['expiresAt'] as Timestamp).toDate()
           : null,
       isGroupMessage: data['isGroupMessage'] as bool? ?? false,
+      isExpired: data['isExpired'] as bool? ?? false,
     );
   }
 
@@ -87,6 +90,7 @@ class MessageModel {
       'viewedBy': viewedBy,
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'isGroupMessage': isGroupMessage,
+      'isExpired': isExpired,
     };
   }
 
@@ -104,6 +108,7 @@ class MessageModel {
     List<String>? viewedBy,
     DateTime? expiresAt,
     bool? isGroupMessage,
+    bool? isExpired,
   }) {
     return MessageModel(
       id: id,
@@ -119,6 +124,7 @@ class MessageModel {
       viewedBy: viewedBy ?? this.viewedBy,
       expiresAt: expiresAt ?? this.expiresAt,
       isGroupMessage: isGroupMessage ?? this.isGroupMessage,
+      isExpired: isExpired ?? this.isExpired,
     );
   }
 

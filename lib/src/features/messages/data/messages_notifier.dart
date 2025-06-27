@@ -36,7 +36,7 @@ final sendMediaMessageProvider = Provider.family<
     Future<void> Function({
       required String mediaPath,
       required MessageType type,
-      required int duration,
+      int? duration,
       String? thumbnailPath,
     }),
     String>((ref, conversationId) {
@@ -44,7 +44,7 @@ final sendMediaMessageProvider = Provider.family<
   return ({
     required String mediaPath,
     required MessageType type,
-    required int duration,
+    int? duration,
     String? thumbnailPath,
   }) => repository.sendSnapMessage(
         conversationId: conversationId,

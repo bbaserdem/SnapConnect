@@ -11,6 +11,7 @@ import '../data/conversation_model.dart';
 import '../data/message_model.dart';
 import '../data/messages_notifier.dart';
 import '../../auth/auth.dart';
+import 'media_viewer_screen.dart';
 
 /// Chat screen widget for individual conversations
 class ChatScreen extends ConsumerStatefulWidget {
@@ -342,6 +343,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       case MessageType.image:
       case MessageType.video:
       case MessageType.snap:
+        if (message.isExpired) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children:[
+              Icon(Icons.photo, size:16, color: Colors.grey),
+              const SizedBox(width:4),
+              Text('Viewed', style: TextStyle(color: Colors.grey,fontStyle: FontStyle.italic,fontSize:12)),
+            ],
+          );
+        }
         return _buildMediaMessage(message, isMe);
       
       default:
@@ -361,71 +372,98 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildMediaMessage(MessageModel message, bool isMe) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    return Container(
-      constraints: const BoxConstraints(
-        maxWidth: 200,
-        maxHeight: 200,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Stack(
-        children: [
-          // Placeholder for media
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  message.type == MessageType.video 
-                      ? Icons.play_circle_filled 
-                      : Icons.image,
-                  size: 48,
-                  color: isMe 
-                      ? colorScheme.onPrimary.withValues(alpha: 0.7)
-                      : colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message.type == MessageType.snap 
-                      ? 'Snap' 
-                      : message.type == MessageType.video 
-                          ? 'Video' 
-                          : 'Photo',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isMe 
-                        ? colorScheme.onPrimary.withValues(alpha: 0.7)
-                        : colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Duration indicator for snaps
-          if (message.type == MessageType.snap && message.duration != null)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${message.duration}s',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+    // Placeholder style container
+    Widget _snapPlaceholder({required IconData icon, required String label}) {
+      return Container(
+        width: 200,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 48, color: isMe ? colorScheme.onPrimary : colorScheme.onSurface),
+            const SizedBox(height: 8),
+            Text(label, style: TextStyle(color: isMe ? colorScheme.onPrimary : colorScheme.onSurface)),
+          ],
+        ),
+      );
+    }
+
+    // For not-yet-viewed snaps → small inline prompt
+    if (message.type == MessageType.snap && !message.isExpired) {
+      return GestureDetector(
+        onTap: () async {
+          if (message.mediaUrl == null) return;
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MediaViewerScreen(
+                mediaUrl: message.mediaUrl!,
+                isSnap: true,
+                duration: message.duration,
               ),
             ),
-        ],
+          );
+          ref.read(markMessageViewedProvider(widget.conversation.id))(message.id);
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.photo, size: 16, color: isMe ? colorScheme.onPrimary : colorScheme.onSurface),
+            const SizedBox(width: 4),
+            Text('View',
+                style: TextStyle(
+                  color: isMe ? colorScheme.onPrimary : colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                )),
+          ],
+        ),
+      );
+    }
+
+    if (message.mediaUrl == null) {
+      // missing media or already cleaned up
+      return _snapPlaceholder(icon: Icons.broken_image, label: 'Unavailable');
+    }
+
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MediaViewerScreen(
+              mediaUrl: message.mediaUrl!,
+              isSnap: message.type == MessageType.snap,
+              duration: message.duration,
+            ),
+          ),
+        );
+
+        ref.read(markMessageViewedProvider(widget.conversation.id))(message.id);
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          message.mediaUrl!,
+          fit: BoxFit.cover,
+          width: 200,
+          height: 200,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return Container(
+              width: 200,
+              height: 200,
+              alignment: Alignment.center,
+              color: Colors.black.withValues(alpha: 0.1),
+              child: CircularProgressIndicator(
+                value: progress.expectedTotalBytes != null
+                    ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

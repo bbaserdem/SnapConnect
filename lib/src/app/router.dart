@@ -14,6 +14,7 @@ import '../features/friends/presentation/friends_screen.dart';
 import '../features/profile/profile.dart';
 import '../features/messages/presentation/messages_screen.dart';
 import '../features/stories/presentation/stories_screen.dart';
+import '../features/stories/presentation/story_viewer_screen.dart';
 import 'navigation_shell.dart';
 
 /// Cache for profile setup status to avoid repeated Firebase calls
@@ -191,6 +192,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+
+      // Story Viewer route
+      GoRoute(
+        path: '/story-viewer/:userId',
+        name: 'story-viewer',
+        builder: (context, state) => StoryViewerScreen(userId: state.pathParameters['userId']!),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

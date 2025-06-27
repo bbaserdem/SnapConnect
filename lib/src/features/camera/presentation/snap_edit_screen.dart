@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../config/constants.dart';
+import '../../../widgets/send_to_bottom_sheet.dart';
 
 /// Snap edit screen widget
 class SnapEditScreen extends ConsumerStatefulWidget {
@@ -36,6 +37,8 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
   Color _textColor = Colors.white;
   double _textSize = 24.0;
   bool _isTextMode = false;
+  bool _keepInChat = false;
+  String? _mediaPath;
 
   @override
   void initState() {
@@ -53,31 +56,33 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
 
   /// Initialize media (video player if it's a video)
   void _initializeMedia() {
-    if (widget.mediaCapture.isPicture) return;
-    
-    // Get the video file path from captureRequest
+    // Save file path regardless of media type
     widget.mediaCapture.captureRequest.when(
       single: (single) {
-        if (single.file != null && !widget.mediaCapture.isPicture) {
-          _videoController = VideoPlayerController.file(File(single.file!.path));
-          _videoController!.initialize().then((_) {
-            setState(() {});
-            _videoController!.play();
-            _videoController!.setLooping(true);
-          });
+        if (single.file != null) {
+          _mediaPath = single.file!.path;
+          if (!widget.mediaCapture.isPicture) {
+            _videoController = VideoPlayerController.file(File(single.file!.path));
+            _videoController!.initialize().then((_) {
+              setState(() {});
+              _videoController!.play();
+              _videoController!.setLooping(true);
+            });
+          }
         }
       },
       multiple: (multiple) {
-        // Handle multiple captures if needed
-        // For now, just use the first file
         final firstFile = multiple.fileBySensor.values.first;
-        if (firstFile != null && !widget.mediaCapture.isPicture) {
-          _videoController = VideoPlayerController.file(File(firstFile.path));
-          _videoController!.initialize().then((_) {
-            setState(() {});
-            _videoController!.play();
-            _videoController!.setLooping(true);
-          });
+        if (firstFile != null) {
+          _mediaPath = firstFile.path;
+          if (!widget.mediaCapture.isPicture) {
+            _videoController = VideoPlayerController.file(File(firstFile.path));
+            _videoController!.initialize().then((_) {
+              setState(() {});
+              _videoController!.play();
+              _videoController!.setLooping(true);
+            });
+          }
         }
       },
     );
@@ -281,6 +286,15 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
                 label: 'Size',
                 onPressed: _showSizePicker,
               ),
+              _buildEditButton(
+                icon: _keepInChat ? Icons.all_inclusive : Icons.timer,
+                label: _keepInChat ? '∞' : '${_snapDuration}s',
+                onPressed: () {
+                  setState(() {
+                    _keepInChat = !_keepInChat;
+                  });
+                },
+              ),
             ],
           ),
         ],
@@ -469,20 +483,22 @@ class _SnapEditScreenState extends ConsumerState<SnapEditScreen> {
 
   /// Handle save/send action
   void _handleSave() {
-    // TODO: Implement save/send functionality
-    // This would involve:
-    // 1. Applying text overlays to the image/video
-    // 2. Saving the edited media
-    // 3. Navigating to share/send screen or returning to camera
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Send functionality will be implemented in Phase 1.4'),
-        duration: Duration(seconds: 2),
+    if (_mediaPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to locate captured media.')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SendToBottomSheet(
+        mediaPath: _mediaPath!,
+        isPicture: widget.mediaCapture.isPicture,
+        duration: _keepInChat ? null : _snapDuration,
+        keepInChat: _keepInChat,
       ),
     );
-    
-    // For now, just navigate back to camera
-    context.pop();
   }
 } 
