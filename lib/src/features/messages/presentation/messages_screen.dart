@@ -14,6 +14,7 @@ import '../data/messaging_repository.dart';
 import '../../auth/auth.dart';
 import 'chat_screen.dart';
 import 'new_message_dialog.dart';
+import 'conversation_tile.dart';
 
 /// Main messages screen widget
 class MessagesScreen extends ConsumerWidget {
@@ -210,10 +211,10 @@ class MessagesScreen extends ConsumerWidget {
         itemCount: conversationsState.conversations.length,
         itemBuilder: (context, index) {
           final conversation = conversationsState.conversations[index];
-          return _buildConversationTile(
-            context,
-            conversation,
-            currentUser?.uid ?? '',
+          return ConversationTile(
+            conversation: conversation,
+            currentUserId: currentUser?.uid ?? '',
+            onTap: () => _openConversation(context, conversation),
           );
         },
       ),
@@ -269,135 +270,6 @@ class MessagesScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  /// Builds a conversation list tile
-  Widget _buildConversationTile(
-    BuildContext context,
-    ConversationModel conversation,
-    String currentUserId,
-  ) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    final displayName = conversation.getDisplayName(currentUserId);
-    final unreadCount = conversation.getUnreadCount(currentUserId);
-    final hasUnread = unreadCount > 0;
-    final lastMessageTime = conversation.lastMessageTimestamp;
-    
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              backgroundColor: conversation.isGroup 
-                  ? colorScheme.tertiary 
-                  : colorScheme.primary,
-              child: conversation.isGroup
-                  ? Icon(
-                      Icons.group,
-                      color: colorScheme.onTertiary,
-                    )
-                  : Text(
-                      _getInitials(displayName),
-                      style: TextStyle(
-                        color: colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
-            if (hasUnread && unreadCount > 0)
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colorScheme.surface,
-                      width: 2,
-                    ),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
-                  ),
-                  child: Text(
-                    unreadCount > 99 ? '99+' : unreadCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        title: Text(
-          displayName,
-          style: TextStyle(
-            fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        subtitle: Text(
-          conversation.lastMessageContent ?? 'No messages yet',
-          style: TextStyle(
-            color: hasUnread 
-                ? colorScheme.onSurface 
-                : colorScheme.onSurface.withValues(alpha: 0.6),
-            fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (lastMessageTime != null)
-              Text(
-                timeago.format(lastMessageTime, locale: 'en_short'),
-                style: TextStyle(
-                  color: hasUnread 
-                      ? colorScheme.primary 
-                      : colorScheme.onSurface.withValues(alpha: 0.6),
-                  fontSize: 12,
-                  fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            if (hasUnread)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
-        ),
-        onTap: () {
-          _openConversation(context, conversation);
-        },
-      ),
-    );
-  }
-
-  /// Get initials from display name
-  String _getInitials(String name) {
-    final words = name.split(' ');
-    if (words.length >= 2) {
-      return '${words[0][0]}${words[1][0]}'.toUpperCase();
-    } else if (words.isNotEmpty) {
-      return words[0].substring(0, words[0].length >= 2 ? 2 : 1).toUpperCase();
-    }
-    return 'U';
   }
 
   /// Shows the new message dialog
@@ -979,5 +851,16 @@ class MessagesScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Get initials from display name
+  String _getInitials(String name) {
+    final words = name.split(' ');
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    } else if (words.isNotEmpty) {
+      return words[0].substring(0, words[0].length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return 'U';
   }
 } 

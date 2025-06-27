@@ -105,6 +105,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development tooling and linting configuration
 - Project documentation and phase planning
 
+## [0.1.6] - 2025-06-27
+### Added - Phase 1.4: Real-time Messaging & Snaps, Phase 1.5: Stories Feature, Phase 1.6: Friend Management System ✅
+- Implemented real-time messaging with Firestore & Firebase Storage, including disappearing Snap logic and Isar offline caching.
+- Added Stories creation and 24-hour lifecycle with TTL policies; built viewer with auto-play.
+- Completed Friend Management: search, send/accept requests, and integration into stories filtering.
+- Integrated Riverpod state notifiers and repository layers for all new features.
+
+### Changed
+- NavigationShell router now hosts all five primary tabs and snap-edit route.
+- Updated Firebase security rules and indexes for new collections.
+
+### Fixed
+- Numerous UI polish items, connection banners, and error-handling improvements across camera, messaging, and friends modules.
+
 ---
 
 ## Version Strategy
@@ -120,9 +134,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] 1.1 User Authentication & Profile Management
 - [x] 1.2 Main App Navigation & Structure  
 - [x] 1.3 Camera and Snap Creation
-- [ ] 1.4 Real-time Messaging & Snaps
-- [ ] 1.5 Stories Feature
-- [ ] 1.6 Friend Management System
+- [x] 1.4 Real-time Messaging & Snaps
+- [x] 1.5 Stories Feature
+- [x] 1.6 Friend Management System
 - [ ] 1.7 Group Messaging
 
 ### Phase 2: AI Integration (0.2.x)

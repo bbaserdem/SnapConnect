@@ -61,8 +61,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
           indicatorColor: colorScheme.primary,
           tabs: const [
             Tab(text: 'My Friends'),
-            Tab(text: 'Requests'),
             Tab(text: 'Search'),
+            Tab(text: 'Requests'),
           ],
         ),
       ),
@@ -70,8 +70,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
         controller: _tabController,
         children: [
           _buildFriendsList(friendsState),
-          _buildRequestsList(friendsState),
           _buildSearchTab(),
+          _buildRequestsList(friendsState),
         ],
       ),
     );
