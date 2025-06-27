@@ -4,11 +4,13 @@ SnapConnect is a social media application for body modification enthusiasts, bui
 
 ## Features
 
-- User authentication with email/password
-- Real-time messaging and photo sharing
-- Profile customization with interest tags
-- Story sharing with 24-hour expiration
-- Friend management system
+- **User Authentication & Profile Management**: Secure sign-up and login with Firebase. Users can set up profiles with a username, bio, and specialized interest tags (e.g., tattoos, piercings).
+- **Main App Navigation**: Intuitive tab-based navigation for Camera, Friends, Profile, Messages, and Stories.
+- **Camera and Snap Creation**: Capture photos and videos. Apply basic filters and add text overlays. Snaps can have a view duration from 1-10 seconds.
+- **Real-time Messaging**: Send and receive disappearing text and media-based Snaps in one-on-one chats.
+- **Group Messaging**: Create and participate in group chats with friends.
+- **Stories**: Post Snaps to a personal Story, visible to friends for 24 hours.
+- **Friend Management**: Search for, add, and manage friends.
 
 ## Prerequisites
 
@@ -16,7 +18,7 @@ SnapConnect is a social media application for body modification enthusiasts, bui
 - Android Studio / VS Code with Flutter extensions
 - Firebase project
 - For Android development:
-  - Android SDK version 35 or higher
+  - Android SDK version 34 or higher
   - Android Studio
 - For iOS development:
   - Xcode
@@ -67,14 +69,28 @@ This project follows security best practices:
 
 ## Quick Start
 
-### For Development (Recommended)
+### For Nix
+
+The project is configured to use the Nix package manager.
+
+#### With Direnv
+
+If direnv is set up, run `direnv allow`, and dev shell will be entered automatically.
+
+#### With just NIx
+
+```bash
+nix develop
+```
+
+### Development with Emulator
 ```bash
 direnv allow                              # Load NixOS development environment
 emulator-dev -avd snapconnect_emulator   # Start emulator with smooth cameras
 flutter run                              # Run the app
 ```
 
-### For Real Camera Testing
+### For Real Camera Testingwith Emulator (Not Recommended)
 ```bash
 optimize-webcam                          # Set webcam to emulator-friendly settings
 emulator-camera -avd snapconnect_emulator # Start with real webcam (choppy)
@@ -127,51 +143,6 @@ direnv allow  # First time only
 | `restore-webcam` | 1280x720 @ 30fps | Video calls (recommended) |
 | `webcam-ultra` | 1920x1080 @ 30fps | High-quality video calls |
 
-#### Testing Workflows
-
-**1. Development Workflow (Recommended)**
-```bash
-# Start emulator with smooth emulated cameras
-emulator-dev -avd snapconnect_emulator
-
-# Run your Flutter app
-flutter run
-```
-
-**2. Real Camera Testing Workflow**
-```bash
-# Optimize webcam for emulator performance
-optimize-webcam
-
-# Start emulator with real webcam (choppy but functional)
-emulator-camera -avd snapconnect_emulator
-
-# Run your Flutter app
-flutter run
-
-# Restore webcam for video calls when done
-restore-webcam
-```
-
-**3. Physical Device Workflow (Best Performance)**
-```bash
-# Get setup instructions
-setup-physical-device
-
-# Connect your Android phone via USB and run
-flutter run
-```
-
-#### Camera Features to Test
-
-- [ ] Camera permissions
-- [ ] Switch between front/back cameras
-- [ ] Take photos
-- [ ] Record videos
-- [ ] Camera preview performance
-- [ ] Filter application
-- [ ] Text overlays
-- [ ] Story posting with timer
 
 #### Performance Notes
 
@@ -191,8 +162,8 @@ flutter run
 - Use minimal webcam settings with `webcam-minimal`
 
 **Build issues:**
-- Verify Android SDK 35 is installed
-- Check `compileSdk = 35` in `android/app/build.gradle`
+- Verify Android SDK 34 is installed
+- Check `compileSdk = 34` in `android/app/build.gradle`
 - Ensure Flutter and dependencies are up to date
 
 ## Contributing

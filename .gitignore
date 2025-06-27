@@ -99,9 +99,9 @@ lib/generated_plugin_registrant.dart
 coverage/
 
 # Firebase related
-**/ios/Runner/GoogleService-Info.plist
-**/android/app/google-services.json
-**/ios/firebase_app_id_file.json
+GoogleService-Info.plist
+google-services.json
+firebase_app_id_file.json
 
 # Environment variables
 .env*local

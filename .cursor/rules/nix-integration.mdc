@@ -1,13 +1,13 @@
 ---
 description: Best practices for setting up local dev environment in NixOS; both for flake and for choosing node packages.
-globs: flake.nix,nix/*
+globs: flake.nix, nix/*
 alwaysApply: false
 ---
 
 # NixOS
 
 ## Overview
-Make sure we can develop on NixOS, and still have it run elsewhere.
+Make sure we can develop on NixOS, and still have our project run elsewhere.
 We will be using flakes, and the current shell will have direnv to automatically load our dev shell.
 
 ## Guidelines for writing to flake.nix

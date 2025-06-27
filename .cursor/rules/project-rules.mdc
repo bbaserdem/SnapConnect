@@ -14,39 +14,6 @@ This document outlines the directory structure, file naming conventions, and cod
 
 ---
 
-## 2. Directory Structure
-
-The project follows a feature-based architecture to promote modularity and scalability. All Flutter source code resides within the `lib/` directory.
-
-```
-/
-├── .vscode/          # VSCode settings
-├── _docs/            # Project documentation (overview, user-flow, rules, etc.)
-├── android/          # Android-specific project files
-├── functions/        # Firebase Cloud Functions (TypeScript)
-│   ├── src/
-│   └── package.json
-├── ios/              # iOS-specific project files
-├── lib/              # Main Flutter application source code
-│   ├── src/
-│   │   ├── app/                # Core app setup (routing, themes, app entry)
-│   │   ├── common/             # Shared widgets, constants, and utilities
-│   │   │   ├── widgets/
-│   │   │   └── utils/
-│   │   ├── features/           # Feature-based modules (e.g., auth, chat, stories)
-│   │   │   └── <feature_name>/
-│   │   │       ├── data/       # Data layer: models, repositories, data sources
-│   │   │       ├── domain/     # Business logic (optional, for complex features)
-│   │   │       └── presentation/ # UI layer: screens, widgets, state notifiers
-│   │   └── main.dart         # App entry point
-├── test/             # Automated tests
-├── flake.nix         # Nix flake for reproducible environment
-├── flake.lock        # Nix lock file
-└── pubspec.yaml      # Flutter project dependencies
-```
-
----
-
 ## 3. File Naming Conventions
 
 To maintain a clean and predictable file structure, all files and directories must follow these conventions:
