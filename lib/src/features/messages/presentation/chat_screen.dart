@@ -9,7 +9,6 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../data/conversation_model.dart';
 import '../data/message_model.dart';
-import '../data/messaging_repository.dart';
 import '../data/messages_notifier.dart';
 import '../../auth/auth.dart';
 
@@ -42,7 +41,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final currentUser = ref.watch(authUserProvider).value;
-    final messagesState = ref.watch(messagesProvider(widget.conversation.id));
+    final messagesValue = ref.watch(messagesProvider(widget.conversation.id));
     
     final displayName = widget.conversation.getDisplayName(currentUser?.uid ?? '');
 
@@ -114,7 +113,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         children: [
           // Messages list
           Expanded(
-            child: _buildMessagesList(messagesState, currentUser?.uid ?? ''),
+            child: _buildMessagesList(messagesValue, currentUser?.uid ?? ''),
           ),
           
           // Message input
@@ -125,35 +124,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   /// Builds the messages list
-  Widget _buildMessagesList(MessagesState messagesState, String currentUserId) {
-    if (messagesState.isLoading && messagesState.messages.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    
-    if (messagesState.error != null && messagesState.messages.isEmpty) {
-      return _buildErrorState(messagesState.error!);
-    }
-    
-    if (messagesState.messages.isEmpty) {
-      return _buildEmptyState();
-    }
-    
-    return ListView.builder(
-      controller: _scrollController,
-      reverse: true,
-      padding: const EdgeInsets.all(16),
-      itemCount: messagesState.messages.length,
-      itemBuilder: (context, index) {
-        final message = messagesState.messages[index];
-        final isMe = message.senderId == currentUserId;
-        final showTimestamp = _shouldShowTimestamp(messagesState.messages, index);
-        
-        return Column(
-          children: [
-            if (showTimestamp)
-              _buildTimestampDivider(message.sentAt),
-            _buildMessageBubble(message, isMe),
-          ],
+  Widget _buildMessagesList(AsyncValue<List<MessageModel>> messagesValue, String currentUserId) {
+    return messagesValue.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => _buildErrorState(err.toString()),
+      data: (messages) {
+        if (messages.isEmpty) return _buildEmptyState();
+
+        return ListView.builder(
+          controller: _scrollController,
+          reverse: true,
+          padding: const EdgeInsets.all(16),
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            final message = messages[index];
+            final isMe = message.senderId == currentUserId;
+            final showTimestamp = _shouldShowTimestamp(messages, index);
+
+            return Column(
+              children: [
+                if (showTimestamp) _buildTimestampDivider(message.sentAt),
+                _buildMessageBubble(message, isMe),
+              ],
+            );
+          },
         );
       },
     );
@@ -220,7 +214,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () {
-              ref.invalidate(messagesProvider(widget.conversation.id));
+              ref.refresh(messagesProvider(widget.conversation.id));
             },
             child: const Text('Retry'),
           ),
@@ -532,8 +526,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _sendTextMessage(String text) {
     if (text.trim().isEmpty) return;
 
-    ref.read(messagesProvider(widget.conversation.id).notifier)
-        .sendTextMessage(text.trim());
+    ref.read(sendTextMessageProvider(widget.conversation.id))(text.trim());
     
     _messageController.clear();
     _scrollToBottom();
