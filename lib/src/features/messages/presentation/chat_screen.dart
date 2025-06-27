@@ -45,6 +45,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messagesValue = ref.watch(messagesProvider(widget.conversation.id));
     
     final displayName = widget.conversation.getDisplayName(currentUser?.uid ?? '');
+    String? handle;
+    if (!widget.conversation.isGroup) {
+      final otherId = widget.conversation.participantIds.firstWhere((id) => id != currentUser?.uid, orElse: () => '');
+      handle = widget.conversation.participantUsernames[otherId];
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -77,8 +82,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 children: [
                   Text(
                     displayName,
-                    style: theme.textTheme.titleMedium,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
+                  if (handle != null && handle!.isNotEmpty)
+                    Text(
+                      '@$handle',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
                   if (widget.conversation.isGroup)
                     Text(
                       '${widget.conversation.participantIds.length} participants',

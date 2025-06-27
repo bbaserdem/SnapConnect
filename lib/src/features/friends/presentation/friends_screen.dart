@@ -6,6 +6,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/friends_notifier.dart';
+import 'add_friend_dialog.dart';
+import 'package:snapconnect/src/features/profile/data/public_user_provider.dart';
+import '../data/user_search_provider.dart';
+
 /// Main friends screen widget
 class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
@@ -24,7 +29,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -40,20 +45,15 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final friendsState = ref.watch(friendsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Friends'),
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            onPressed: () {
-              _showAddFriendDialog(context);
-            },
-          ),
-        ],
+        actions: const [],
         bottom: TabBar(
           controller: _tabController,
           labelColor: colorScheme.primary,
@@ -62,203 +62,155 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
           tabs: const [
             Tab(text: 'My Friends'),
             Tab(text: 'Requests'),
+            Tab(text: 'Search'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildFriendsList(),
-          _buildRequestsList(),
+          _buildFriendsList(friendsState),
+          _buildRequestsList(friendsState),
+          _buildSearchTab(),
         ],
       ),
     );
   }
 
   /// Builds the friends list tab
-  Widget _buildFriendsList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5, // Placeholder count
-      itemBuilder: (context, index) {
-        return _buildFriendTile(
-          name: 'Friend ${index + 1}',
-          username: '@friend${index + 1}',
-          avatarText: 'F${index + 1}',
-          isOnline: index % 2 == 0,
+  Widget _buildFriendsList(FriendsState state) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return StatefulBuilder(
+      builder: (context, setStateSB) {
+        String query = '';
+        final filtered = query.isEmpty
+            ? state.acceptedIds
+            : state.acceptedIds.where((uid) {
+                final userAsync = ref.watch(publicUserProvider(uid));
+                return userAsync.when(
+                  data: (user) => user.username.toLowerCase().contains(query.toLowerCase()) ||
+                      user.displayName.toLowerCase().contains(query.toLowerCase()),
+                  loading: () => false,
+                  error: (_, __) => false,
+                );
+              }).toList();
+
+        if (filtered.isEmpty) {
+          return const Center(child: Text('No friends found'));
+        }
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Search friends',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (v) => setStateSB(() { query = v.trim(); }),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: filtered.length,
+                itemBuilder: (context, index) {
+                  return _FriendTile(uid: filtered[index]);
+                },
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
   /// Builds the friend requests list tab
-  Widget _buildRequestsList() {
+  Widget _buildRequestsList(FriendsState state) {
+    final incoming = state.incoming;
+
+    if (state.isLoading && incoming.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (incoming.isEmpty) {
+      return const Center(child: Text('No friend requests'));
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: 3, // Placeholder count
+      itemCount: incoming.length,
       itemBuilder: (context, index) {
-        return _buildRequestTile(
-          name: 'User ${index + 1}',
-          username: '@user${index + 1}',
-          avatarText: 'U${index + 1}',
+        final req = incoming[index];
+        return _RequestTile(
+          uid: req.friendUid,
+          onAccept: () => ref.read(friendsProvider.notifier).acceptRequest(req.friendUid),
+          onDecline: () => ref.read(friendsProvider.notifier).removeRelationship(req.friendUid),
         );
       },
     );
   }
 
-  /// Builds a friend list tile
-  Widget _buildFriendTile({
-    required String name,
-    required String username,
-    required String avatarText,
-    required bool isOnline,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  /// Builds the search tab
+  Widget _buildSearchTab() {
+    String query = '';
+    return StatefulBuilder(
+      builder: (context, setStateSB) {
+        final suggestions = ref.watch(usernameSearchProvider(query));
+        final acceptedIds = ref.watch(acceptedFriendIdsProvider);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: () {
-          // Visual feedback for tapping friend card
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Tapped on $name'),
-              duration: const Duration(milliseconds: 800),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: ListTile(
-          leading: Stack(
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              CircleAvatar(
-                backgroundColor: colorScheme.primary,
-                child: Text(
-                  avatarText,
-                  style: TextStyle(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+              TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Search users',
+                  prefixIcon: Icon(Icons.search),
                 ),
+                onChanged: (v) => setStateSB(() { query = v.trim(); }),
               ),
-              if (isOnline)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorScheme.surface,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          title: Text(name),
-          subtitle: Text(username),
-          trailing: PopupMenuButton<String>(
-            onSelected: (value) {
-              _handleFriendAction(value, name);
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'message',
-                child: Row(
-                  children: [
-                    Icon(Icons.message),
-                    SizedBox(width: 8),
-                    Text('Send Message'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'block',
-                child: Row(
-                  children: [
-                    Icon(Icons.block),
-                    SizedBox(width: 8),
-                    Text('Block'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'remove',
-                child: Row(
-                  children: [
-                    Icon(Icons.person_remove),
-                    SizedBox(width: 8),
-                    Text('Remove Friend'),
-                  ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: suggestions.when(
+                  data: (list) {
+                    if (list.isEmpty) return const Center(child: Text('No users found'));
+                    return ListView.builder(
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        final item = list[index];
+                        final isFriend = acceptedIds.contains(item.uid);
+                        return ListTile(
+                          leading: CircleAvatar(child: Text(item.username[0].toUpperCase())),
+                          title: Text(item.displayName.isNotEmpty ? item.displayName : item.username),
+                          subtitle: Text('@${item.username}'),
+                          trailing: isFriend
+                              ? const Icon(Icons.check, color: Colors.green)
+                              : IconButton(
+                                  icon: const Icon(Icons.person_add),
+                                  onPressed: () async {
+                                    await ref.read(friendsProvider.notifier).sendRequest(item.uid);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Friend request sent to ${item.username}')),
+                                    );
+                                  },
+                                ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => Center(child: Text(err.toString())),
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  /// Builds a friend request tile
-  Widget _buildRequestTile({
-    required String name,
-    required String username,
-    required String avatarText,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: () {
-          // Visual feedback for tapping request card
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Tapped on $name request'),
-              duration: const Duration(milliseconds: 800),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: colorScheme.secondary,
-            child: Text(
-              avatarText,
-              style: TextStyle(
-                color: colorScheme.onSecondary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          title: Text(name),
-          subtitle: Text(username),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.check, color: Colors.green),
-                onPressed: () {
-                  _handleRequestAction('accept', name);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.close, color: Colors.red),
-                onPressed: () {
-                  _handleRequestAction('decline', name);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -266,32 +218,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
   void _showAddFriendDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Friend'),
-        content: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Enter username or email',
-            prefixIcon: Icon(Icons.search),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Friend search will be implemented in Phase 1.6'),
-                ),
-              );
-            },
-            child: const Text('Search'),
-          ),
-        ],
-      ),
+      builder: (ctx) => const AddFriendDialog(),
     );
   }
 
@@ -316,17 +243,77 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
       ),
     );
   }
+}
 
-  /// Handles friend request actions
-  void _handleRequestAction(String action, String userName) {
-    final message = action == 'accept'
-        ? 'Accepted friend request from $userName'
-        : 'Declined friend request from $userName';
+/// Friend tile that resolves uid to public profile info.
+class _FriendTile extends ConsumerWidget {
+  final String uid;
+  const _FriendTile({required this.uid});
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$message (Feature will be implemented later)'),
-      ),
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(publicUserProvider(uid));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return userAsync.when(
+      loading: () => const ListTile(title: Text('Loading...')),
+      error: (err, _) => ListTile(title: Text(uid)),
+      data: (user) {
+        final avatarText = user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: colorScheme.primary,
+              child: Text(avatarText, style: TextStyle(color: colorScheme.onPrimary)),
+            ),
+            title: Text(user.displayName.isNotEmpty ? user.displayName : user.username),
+            subtitle: Text('@${user.username}'),
+            trailing: Icon(Icons.chevron_right),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Incoming request tile
+class _RequestTile extends ConsumerWidget {
+  final String uid;
+  final VoidCallback onAccept;
+  final VoidCallback onDecline;
+
+  const _RequestTile({required this.uid, required this.onAccept, required this.onDecline});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(publicUserProvider(uid));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return userAsync.when(
+      loading: () => const ListTile(title: Text('Loading...')),
+      error: (err, _) => ListTile(title: Text(uid)),
+      data: (user) {
+        final avatarText = user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: colorScheme.secondary,
+              child: Text(avatarText, style: TextStyle(color: colorScheme.onSecondary)),
+            ),
+            title: Text(user.displayName.isNotEmpty ? user.displayName : user.username),
+            subtitle: Text('@${user.username}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(icon: const Icon(Icons.check, color: Colors.green), onPressed: onAccept),
+                IconButton(icon: const Icon(Icons.close, color: Colors.red), onPressed: onDecline),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 } 

@@ -8,6 +8,19 @@ service cloud.firestore {
 
       // Each user may write only their own document
       allow write: if request.auth != null && request.auth.uid == userId;
+
+      /*
+       * Friends sub-collection: symmetrical relationship documents are
+       * stored under both users. Either party involved in the relationship
+       * may create / update / delete their corresponding document.
+       */
+      match /friends/{friendId} {
+        allow read, write: if request.auth != null &&
+          (
+            request.auth.uid == userId || // owner of the subcollection
+            request.auth.uid == friendId   // other participant
+          );
+      }
     }
     
     // Conversations collection rules

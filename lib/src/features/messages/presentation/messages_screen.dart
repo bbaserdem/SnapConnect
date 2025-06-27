@@ -13,6 +13,7 @@ import '../data/conversation_model.dart';
 import '../data/messaging_repository.dart';
 import '../../auth/auth.dart';
 import 'chat_screen.dart';
+import 'new_message_dialog.dart';
 
 /// Main messages screen widget
 class MessagesScreen extends ConsumerWidget {
@@ -224,39 +225,48 @@ class MessagesScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 64,
-            color: colorScheme.onSurface.withValues(alpha: 0.6),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: EdgeInsets.only(
+          top: constraints.maxHeight * 0.2,
+          left: 16,
+          right: 16,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.chat_bubble_outline,
+                size: 64,
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No conversations yet',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Start a conversation with your friends!',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () {
+                  // TODO: Navigate to friends list or search
+                },
+                icon: const Icon(Icons.person_add),
+                label: const Text('Find Friends'),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'No conversations yet',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Start a conversation with your friends!',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: () {
-              // TODO: Navigate to friends list or search
-            },
-            icon: const Icon(Icons.person_add),
-            label: const Text('Find Friends'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -394,86 +404,7 @@ class MessagesScreen extends ConsumerWidget {
   void _showNewMessageDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New Message'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const TextField(
-              decoration: InputDecoration(
-                hintText: 'Search for friends to message',
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Friend search will be implemented with the friends feature.',
-              style: TextStyle(fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-            // Debug option for testing
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'DEBUG: Test Messaging',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _testFirestoreConnectivity(context, ref);
-                          },
-                          child: const Text('Test Firestore'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _createTestConversation(context, ref);
-                          },
-                          child: const Text('Create Test Chat'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Friend search will be available with the friends feature'),
-                ),
-              );
-            },
-            child: const Text('Start Chat'),
-          ),
-        ],
-      ),
+      builder: (_) => const NewMessageDialog(),
     );
   }
 
@@ -992,8 +923,6 @@ class MessagesScreen extends ConsumerWidget {
       ),
     );
   }
-
-
 
   /// Sends a demo message
   void _sendDemoMessage(BuildContext context, String text) {

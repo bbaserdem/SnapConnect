@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../common/utils/error_handler.dart';
 import '../../auth/auth.dart';
+import '../../friends/data/friends_notifier.dart';
 import 'stories_repository.dart';
 import 'story_model.dart';
 
@@ -49,6 +50,7 @@ class StoriesNotifier extends StateNotifier<StoriesState> {
 
   StreamSubscription<List<StoryDocument>>? _storiesSub;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  ProviderSubscription<List<String>>? _friendIdsSub;
 
   Future<void> _init() async {
     // Wait until the auth provider resolves.
@@ -58,21 +60,31 @@ class StoriesNotifier extends StateNotifier<StoriesState> {
       return;
     }
 
-    _listenToStories();
+    // Combine current user's uid with accepted friend ids from provider.
+    final currentUid = user.uid;
+
+    _friendIdsSub = _ref.listen<List<String>>(acceptedFriendIdsProvider, (prev, next) {
+      // Ensure we always include current user's own uid.
+      final ids = {currentUid, ...next}.toList();
+      _listenToStories(ids);
+    }, fireImmediately: true);
+
     _setupConnectivity();
   }
 
-  void _listenToStories() {
+  void _listenToStories(List<String> visibleIds) {
     state = state.copyWith(isLoading: true, error: null);
 
-    // TODO: Replace with real friends list once friend feature arrives.
-    // For now, fetch everyone including current user.
-    final uid = _repository.currentUserId;
-    final friendIds = [uid!];
+    if (visibleIds.isEmpty) {
+      // No friends yet – show nothing.
+      state = state.copyWith(stories: [], isLoading: false);
+      _storiesSub?.cancel();
+      return;
+    }
 
     _storiesSub?.cancel();
     _storiesSub = _repository
-        .getStoriesStream(friendIds: friendIds)
+        .getStoriesStream(friendIds: visibleIds)
         .listen(
       (stories) {
         state = state.copyWith(stories: stories, isLoading: false, error: null);
@@ -88,7 +100,7 @@ class StoriesNotifier extends StateNotifier<StoriesState> {
     _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
       final hasNetwork = results.any((r) => r != ConnectivityResult.none);
       if (hasNetwork && state.error != null) {
-        _listenToStories(); // retry
+        _listenToStories([_repository.currentUserId!]); // retry
       }
     });
   }
@@ -97,6 +109,7 @@ class StoriesNotifier extends StateNotifier<StoriesState> {
   void dispose() {
     _storiesSub?.cancel();
     _connectivitySub?.cancel();
+    _friendIdsSub?.close();
     super.dispose();
   }
 }

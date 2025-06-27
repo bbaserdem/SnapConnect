@@ -9,6 +9,9 @@ import 'package:go_router/go_router.dart';
 import '../data/stories_notifier.dart';
 import '../data/story_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:typed_data';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import '../../auth/auth.dart';
 
 /// Family provider to fetch a user\'s username by UID.
 final _usernameProvider = FutureProvider.family<String, String>((ref, uid) async {
@@ -45,13 +48,11 @@ class StoriesScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'My Story',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'My Stories',
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  _buildMyStoryCard(context),
+                  _buildMyStoriesRow(context, storiesState),
                 ],
               ),
             ),
@@ -81,74 +82,39 @@ class StoriesScreen extends ConsumerWidget {
     );
   }
 
-  /// Builds the "My Story" card
-  Widget _buildMyStoryCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  /// Builds horizontal list of current user's story media cards.
+  Widget _buildMyStoriesRow(BuildContext context, StoriesState state) {
+    // find current user's stories
+    return Consumer(builder: (context, ref, _) {
+      final user = ref.watch(authUserProvider).value;
+      if (user == null) return const SizedBox.shrink();
+      final myDoc = state.stories.firstWhere((s) => s.userId == user.uid, orElse: () => StoryDocument(userId: '', media: const [], updatedAt: DateTime(0)));
+      if (myDoc.userId.isEmpty || myDoc.media.isEmpty) {
+        return const Text('No stories yet');
+      }
 
-    return Card(
-      child: InkWell(
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Add to Story functionality coming in Phase 1.5'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: colorScheme.primary,
-                    width: 2,
-                    style: BorderStyle.solid,
-                  ),
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
+      return SizedBox(
+        height: 180,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: myDoc.media.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            final media = myDoc.media[index];
+            return SizedBox(
+              width: 120,
+              child: _buildStoryCard(
+                context,
+                uid: user.uid,
+                timestamp: _formatTimestamp(DateTime.now().difference(media.postedAt)),
+                hasNewStory: false,
+                storyDoc: StoryDocument(userId: user.uid, media: [media], updatedAt: media.postedAt),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Add to Your Story',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'Share a moment with your friends',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: colorScheme.onSurface.withValues(alpha: 0.4),
-                size: 16,
-              ),
-            ],
-          ),
+            );
+          },
         ),
-      ),
-    );
+      );
+    });
   }
 
   /// Builds the grid of friends' stories
@@ -221,15 +187,20 @@ class StoriesScreen extends ConsumerWidget {
             // Story preview background or placeholder
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: previewMedia != null && previewMedia.type == StoryMediaType.photo
-                  ? Image.network(
-                      previewMedia.url,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (_, __, ___) => _placeholderBackground(colorScheme),
-                    )
-                  : _placeholderBackground(colorScheme),
+              child: previewMedia == null
+                  ? _placeholderBackground(colorScheme)
+                  : previewMedia.type == StoryMediaType.photo
+                      ? Image.network(
+                          previewMedia.url,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (_, __, ___) => _placeholderBackground(colorScheme),
+                        )
+                      : _VideoStoryThumbnail(
+                          videoUrl: previewMedia.url,
+                          placeholder: _placeholderBackground(colorScheme),
+                        ),
             ),
             
             // Story preview overlay
@@ -384,5 +355,57 @@ class StoriesScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// Widget that generates and caches a thumbnail for a remote video URL.
+class _VideoStoryThumbnail extends StatefulWidget {
+  const _VideoStoryThumbnail({required this.videoUrl, required this.placeholder});
+
+  final String videoUrl;
+  final Widget placeholder;
+
+  @override
+  State<_VideoStoryThumbnail> createState() => _VideoStoryThumbnailState();
+}
+
+class _VideoStoryThumbnailState extends State<_VideoStoryThumbnail> {
+  Uint8List? _bytes;
+  bool _error = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _generate();
+  }
+
+  Future<void> _generate() async {
+    try {
+      final bytes = await VideoThumbnail.thumbnailData(
+        video: widget.videoUrl,
+        imageFormat: ImageFormat.PNG,
+        maxWidth: 400,
+        quality: 75,
+      );
+      if (mounted) {
+        setState(() => _bytes = bytes);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_bytes != null) {
+      return Image.memory(
+        _bytes!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    }
+    if (_error) return widget.placeholder;
+    return Center(child: widget.placeholder);
   }
 } 

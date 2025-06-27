@@ -170,6 +170,9 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
+    final trimmedEmail = email.trim();
+    final trimmedPassword = password.trim();
+
     try {
       // Disable reCAPTCHA verification for development/testing
       await auth.setSettings(
@@ -177,19 +180,23 @@ class AuthRepository {
       );
 
       final userCredential = await auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+        email: trimmedEmail,
+        password: trimmedPassword,
       );
       
       ErrorHandler.logSuccess('user sign in', additionalInfo: {
         'uid': userCredential.user?.uid,
-        'email': email,
+        'email': trimmedEmail,
       });
       
       return userCredential;
     } on FirebaseAuthException catch (e) {
+      if (e.code == 'invalid-credential' || e.code == 'invalid-login-credentials') {
+        throw Exception('Incorrect email or password. Please try again.');
+      }
+      
       ErrorHandler.logError('sign in with email and password', e, additionalInfo: {
-        'email': email,
+        'email': trimmedEmail,
       });
       throw Exception(ErrorHandler.handleFirebaseAuthException(e));
     }
