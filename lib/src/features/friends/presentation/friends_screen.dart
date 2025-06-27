@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 
 import '../data/friends_notifier.dart';
 import 'add_friend_dialog.dart';
@@ -22,6 +23,8 @@ class FriendsScreen extends ConsumerStatefulWidget {
 class _FriendsScreenState extends ConsumerState<FriendsScreen>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
+  String query = '';
+  Timer? _debounce;
 
   @override
   bool get wantKeepAlive => true; // Keep state alive for better UX
@@ -157,7 +160,6 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
 
   /// Builds the search tab
   Widget _buildSearchTab() {
-    String query = '';
     return StatefulBuilder(
       builder: (context, setStateSB) {
         final suggestions = ref.watch(usernameSearchProvider(query));
@@ -172,12 +174,18 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
                   hintText: 'Search users',
                   prefixIcon: Icon(Icons.search),
                 ),
-                onChanged: (v) => setStateSB(() { query = v.trim(); }),
+                onChanged: (v) {
+                  _debounce?.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 300), () {
+                    setStateSB(() => query = v.trim().toLowerCase());
+                  });
+                },
               ),
               const SizedBox(height: 12),
               Expanded(
                 child: suggestions.when(
                   data: (list) {
+                    print('[FriendsSearch] results len=${list.length}');
                     if (list.isEmpty) return const Center(child: Text('No users found'));
                     return ListView.builder(
                       itemCount: list.length,

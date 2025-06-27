@@ -12,6 +12,7 @@ import '../data/message_model.dart';
 import '../data/messages_notifier.dart';
 import '../../auth/auth.dart';
 import 'media_viewer_screen.dart';
+import '../data/messaging_repository.dart';
 
 /// Chat screen widget for individual conversations
 class ChatScreen extends ConsumerStatefulWidget {
@@ -120,6 +121,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               );
             },
           ),
+          if (widget.conversation.isGroup)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'leave') _leaveGroup();
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'leave',
+                  child: Text('Leave Group'),
+                ),
+              ],
+            ),
         ],
       ),
       body: Column(
@@ -289,7 +302,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.conversation.isGroup && !isMe)
+            if (widget.conversation.isGroup)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
@@ -297,7 +310,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+                    color: isMe ? colorScheme.onPrimary : colorScheme.primary,
                   ),
                 ),
               ),
@@ -628,6 +641,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       return '${diff.inDays} days ago';
     } else {
       return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+    }
+  }
+
+  Future<void> _leaveGroup() async {
+    final repo = ref.read(messagingRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await repo.leaveConversation(widget.conversation.id);
+      if (!mounted) return;
+      messenger.showSnackBar(const SnackBar(content: Text('You left the group')));
+      Navigator.of(context).pop(); // exit chat screen
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
   }
 } 

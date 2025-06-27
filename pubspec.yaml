@@ -98,6 +98,8 @@ dev_dependencies:
   # Generates platform-specific launcher icons from a single source image
   flutter_launcher_icons: ^0.13.1
 
+  mockito: ^5.4.4
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

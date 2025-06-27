@@ -21,6 +21,7 @@ class ConversationModel {
   final Map<String, int> unreadCounts; // userId -> unread count mapping
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String> deletedFor; // UIDs who left the conversation
 
   const ConversationModel({
     required this.id,
@@ -37,6 +38,7 @@ class ConversationModel {
     required this.unreadCounts,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedFor = const [],
   });
 
   /// Create a ConversationModel from a Firestore document
@@ -68,6 +70,10 @@ class ConversationModel {
       participantUsernames[key] = value as String;
     });
 
+    // Parse deletedFor
+    final deletedForData = data['deletedFor'] as List? ?? [];
+    final deletedFor = List<String>.from(deletedForData);
+
     return ConversationModel(
       id: snapshot.id,
       participantIds: List<String>.from(data['participantIds'] as List),
@@ -85,6 +91,7 @@ class ConversationModel {
       unreadCounts: unreadCounts,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      deletedFor: deletedFor,
     );
   }
 
@@ -110,6 +117,7 @@ class ConversationModel {
           : null,
       'lastViewedTimestamps': lastViewedData,
       'unreadCounts': unreadCounts,
+      'deletedFor': deletedFor,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -129,6 +137,7 @@ class ConversationModel {
     Map<String, DateTime>? lastViewedTimestamps,
     Map<String, int>? unreadCounts,
     DateTime? updatedAt,
+    List<String>? deletedFor,
   }) {
     return ConversationModel(
       id: id,
@@ -145,6 +154,7 @@ class ConversationModel {
       unreadCounts: unreadCounts ?? this.unreadCounts,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedFor: deletedFor ?? this.deletedFor,
     );
   }
 

@@ -74,9 +74,12 @@ class ConversationTile extends StatelessWidget {
           backgroundColor:
               conversation.isGroup ? colorScheme.tertiary : colorScheme.primary,
           child: conversation.isGroup
-              ? Icon(
-                  Icons.group,
-                  color: colorScheme.onTertiary,
+              ? Text(
+                  _getInitials(conversation.groupName ?? 'GC'),
+                  style: TextStyle(
+                    color: colorScheme.onTertiary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 )
               : Text(
                   _getInitials(displayName),

@@ -18,6 +18,9 @@ Future<void> main() async {
   bool firebaseInitialized = false;
   
   try {
+    // Silence verbose debug logs during development – comment out if needed.
+    // debugPrint = (String? message, {int? wrapWidth}) {};
+
     debugPrint('Initializing Firebase…');
 
     // One-liner works across mobile, web, and desktop because

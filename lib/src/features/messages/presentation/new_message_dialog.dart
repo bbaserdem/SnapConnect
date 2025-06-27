@@ -19,6 +19,7 @@ import '../../profile/data/public_user_provider.dart';
 import '../data/conversations_notifier.dart';
 import 'chat_screen.dart';
 import '../../friends/data/user_search_repository.dart';
+import '../data/messaging_repository.dart';
 
 class NewMessageDialog extends ConsumerStatefulWidget {
   const NewMessageDialog({super.key});
@@ -31,6 +32,10 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
   final _controller = TextEditingController();
   Timer? _debounce;
   String _query = '';
+  bool _isGroup = false;
+  String _groupName = '';
+  final Set<String> _selectedIds = {};
+  final Map<String, String> _selectedUsernames = {};
 
   @override
   void dispose() {
@@ -68,6 +73,25 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
     }
   }
 
+  Future<void> _createGroup() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(messagingRepositoryProvider);
+    try {
+      final conv = await repo.createGroupConversation(
+        groupName: _groupName.trim(),
+        participantIds: _selectedIds.toList(),
+        participantUsernames: _selectedUsernames,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ChatScreen(conversation: conv)),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final suggestions = ref.watch(usernameSearchProvider(_query));
@@ -84,9 +108,29 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
       title: const Text('New Message'),
       content: SizedBox(
         width: 400,
-        height: 400,
+        height: 500,
         child: Column(
           children: [
+            // Toggle between direct and group chat
+            Row(
+              children: [
+                const Text('Group chat'),
+                const Spacer(),
+                Switch(
+                  value: _isGroup,
+                  onChanged: (v) => setState(() {
+                    _isGroup = v;
+                    _selectedIds.clear();
+                    _selectedUsernames.clear();
+                  }),
+                ),
+              ],
+            ),
+            if (_isGroup)
+              TextField(
+                decoration: const InputDecoration(labelText: 'Group name'),
+                onChanged: (v) => _groupName = v,
+              ),
             TextField(
               controller: _controller,
               onChanged: _onChanged,
@@ -100,7 +144,10 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
               child: _query.isEmpty
                   ? _buildFriendsList(friendProfiles)
                   : suggestions.when(
-                      data: (list) => _buildSearchResults(list),
+                      data: (list) {
+                        print('[Dialog] suggestions length=${list.length}');
+                        return _buildSearchResults(list);
+                      },
                       loading: () => const Center(child: CircularProgressIndicator()),
                       error: (err, _) => Center(child: Text(err.toString())),
                     ),
@@ -109,6 +156,13 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
         ),
       ),
       actions: [
+        if (_isGroup)
+          FilledButton(
+            onPressed: _selectedIds.isNotEmpty && _groupName.trim().isNotEmpty
+                ? () => _createGroup()
+                : null,
+            child: const Text('Create Group'),
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
@@ -125,6 +179,25 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
       itemCount: friends.length,
       itemBuilder: (context, index) {
         final user = friends[index];
+        if (_isGroup) {
+          return CheckboxListTile(
+            value: _selectedIds.contains(user.uid),
+            onChanged: (val) {
+              setState(() {
+                if (val == true) {
+                  _selectedIds.add(user.uid);
+                  _selectedUsernames[user.uid] = user.username;
+                } else {
+                  _selectedIds.remove(user.uid);
+                  _selectedUsernames.remove(user.uid);
+                }
+              });
+            },
+            title: Text(user.displayName.isNotEmpty ? user.displayName : user.username),
+            subtitle: Text('@${user.username}'),
+            secondary: CircleAvatar(child: Text(user.username[0].toUpperCase())),
+          );
+        }
         return ListTile(
           leading: CircleAvatar(child: Text(user.username[0].toUpperCase())),
           title: Text(user.displayName.isNotEmpty ? user.displayName : user.username),
@@ -137,10 +210,30 @@ class _NewMessageDialogState extends ConsumerState<NewMessageDialog> {
 
   Widget _buildSearchResults(List<UserSearchResult> results) {
     if (results.isEmpty) return const Center(child: Text('No users found'));
+    print('[SearchResults] size=${results.length}');
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (context, index) {
         final item = results[index];
+        if (_isGroup) {
+          return CheckboxListTile(
+            value: _selectedIds.contains(item.uid),
+            onChanged: (val) {
+              setState(() {
+                if (val == true) {
+                  _selectedIds.add(item.uid);
+                  _selectedUsernames[item.uid] = item.username;
+                } else {
+                  _selectedIds.remove(item.uid);
+                  _selectedUsernames.remove(item.uid);
+                }
+              });
+            },
+            title: Text(item.displayName.isNotEmpty ? item.displayName : item.username),
+            subtitle: Text('@${item.username}'),
+            secondary: CircleAvatar(child: Text(item.username[0].toUpperCase())),
+          );
+        }
         return ListTile(
           leading: CircleAvatar(child: Text(item.username[0].toUpperCase())),
           title: Text(item.displayName.isNotEmpty ? item.displayName : item.username),

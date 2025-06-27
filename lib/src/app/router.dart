@@ -59,42 +59,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       // For logged in users, check profile setup status using cache
       if (isLoggedIn && !isProfileSetupRoute) {
         final uid = user.uid;
-        
-        // Check cache first
-        if (_profileSetupCache.containsKey(uid)) {
-          final hasCompletedSetup = _profileSetupCache[uid]!;
-          if (!hasCompletedSetup) {
-            return '/profile-setup';
-          }
-        } else {
-          // Schedule async check but don't block navigation
-          Future.microtask(() async {
-            try {
-              final hasCompletedSetup = await authRepository.hasCompletedProfileSetup(uid);
-              _profileSetupCache[uid] = hasCompletedSetup;
-              
-              // If setup is not complete and user is not already on profile setup,
-              // navigate to profile setup
-              if (!hasCompletedSetup && currentLocation != '/profile-setup') {
-                // Use the router to navigate asynchronously
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (context.mounted) {
-                    context.go('/profile-setup');
-                  }
-                });
-              }
-            } catch (e) {
-              // On error, assume profile setup is needed
-              _profileSetupCache[uid] = false;
-              if (currentLocation != '/profile-setup') {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (context.mounted) {
-                    context.go('/profile-setup');
-                  }
-                });
-              }
+
+        // If we don't yet know, trigger async check and allow navigation
+        if (!_profileSetupCache.containsKey(uid)) {
+          authRepository.hasCompletedProfileSetup(uid).then((complete){
+            _profileSetupCache[uid]=complete;
+            if(!complete && context.mounted){
+              context.go('/profile-setup');
             }
           });
+          // permit navigation for now
+        } else if (!_profileSetupCache[uid]!) {
+          return '/profile-setup';
         }
       }
 
@@ -227,4 +203,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ),
   );
-}); 
+});
+
+/// Mark profile setup as completed for a user (used after saving profile).
+void markProfileSetupComplete(String uid) {
+  _profileSetupCache[uid] = true;
+} 

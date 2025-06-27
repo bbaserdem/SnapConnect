@@ -24,24 +24,49 @@ class UserSearchRepository {
 
   Future<List<UserSearchResult>> search(String query, {int limit = 10}) async {
     final normalized = query.toLowerCase().trim();
+    print('[UserSearch] query="$normalized"');
     if (normalized.isEmpty) return [];
 
-    final end = '${normalized}\uf8ff';
-    final snapshot = await _firestore
-        .collection('users')
-        .orderBy('username')
-        .startAt([normalized])
-        .endAt([end])
-        .limit(limit)
-        .get();
+    try {
+      final end = '${normalized}\uf8ff';
+      final snapshot = await _firestore
+          .collection('users')
+          .orderBy('username')
+          .startAt([normalized])
+          .endAt([end])
+          .limit(limit)
+          .get();
 
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return UserSearchResult(
-        uid: doc.id,
-        username: data['username'] as String? ?? '',
-        displayName: data['display_name'] as String? ?? '',
-      );
-    }).toList();
+      if (snapshot.docs.isEmpty) {
+        final eqSnap = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: normalized)
+            .limit(limit)
+            .get();
+        print('[UserSearch] equality results: ' + eqSnap.docs.length.toString());
+        return eqSnap.docs.map((doc) {
+          final data = doc.data();
+          return UserSearchResult(
+            uid: doc.id,
+            username: data['username'] as String? ?? '',
+            displayName: data['display_name'] as String? ?? '',
+          );
+        }).toList();
+      }
+
+      print('[UserSearch] prefix results: ${snapshot.docs.length}');
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return UserSearchResult(
+          uid: doc.id,
+          username: data['username'] as String? ?? '',
+          displayName: data['display_name'] as String? ?? '',
+        );
+      }).toList();
+    } catch (e) {
+      print('[UserSearch] error: $e');
+      rethrow;
+    }
   }
 } 

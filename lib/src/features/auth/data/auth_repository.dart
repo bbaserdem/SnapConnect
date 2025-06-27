@@ -280,8 +280,8 @@ class AuthRepository {
       if (e.toString().contains('timeout') || 
           e.toString().contains('network') ||
           e.toString().contains('resolve host')) {
-        debugPrint('Network issue detected - allowing user to proceed');
-        return true; // Allow user to proceed
+        debugPrint('Network issue detected - assuming profile setup NOT complete');
+        return false;
       }
       
       throw ErrorHandler.createException(

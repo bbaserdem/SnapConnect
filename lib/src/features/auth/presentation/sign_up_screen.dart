@@ -116,19 +116,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           );
       
       if (mounted) {
-        // Navigate to profile setup immediately
-        context.go('/profile-setup');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Account created! Complete your profile.'),
-              ],
-            ),
+          const SnackBar(
+            content: Text('Account created! Complete your profile.'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ),
         );
       }

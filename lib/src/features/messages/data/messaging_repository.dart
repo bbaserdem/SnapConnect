@@ -94,6 +94,7 @@ class MessagingRepository {
           })
           .where((conv) => conv != null)
           .cast<ConversationModel>()
+          .where((conv) => _isVisibleConversation(conv, userId))
           .toList();
 
       debugPrint('Successfully parsed ${conversations.length} conversations');
@@ -266,6 +267,8 @@ class MessagingRepository {
         lastMessageTimestamp: now,
       );
 
+      await _incrementUnreadCounts(conversationId, userId);
+
       return message;
     } catch (e) {
       ErrorHandler.logError('send text message', e);
@@ -342,6 +345,8 @@ class MessagingRepository {
         lastMessageTimestamp: now,
       );
 
+      await _incrementUnreadCounts(conversationId, userId);
+
       return message;
     } catch (e) {
       ErrorHandler.logError('send snap message', e);
@@ -355,19 +360,7 @@ class MessagingRepository {
       await firestore.collection('messages').doc(messageId).update({
         'viewedBy': ff.FieldValue.arrayUnion([userId]),
       });
-
-      // Check if this is a disappearing message that should be deleted
-      final messageDoc = await firestore
-          .collection('messages')
-          .doc(messageId)
-          .get();
-      
-      if (messageDoc.exists) {
-        final message = MessageModel.fromFirestore(messageDoc);
-        if (message.isDisappearing && message.hasBeenViewedBy(userId)) {
-          _scheduleMessageDeletion(message);
-        }
-      }
+      // No immediate deletion logic for snaps; they remain until TTL/expiry.
     } catch (e) {
       ErrorHandler.logError('mark message as viewed', e);
     }
@@ -479,7 +472,7 @@ class MessagingRepository {
 
   /// Clean up expired messages
   Future<void> _cleanupExpiredMessages(List<MessageModel> messages) async {
-    final expiredMessages = messages.where((msg) => msg.hasExpired).toList();
+    final expiredMessages = messages.where((msg) => msg.hasExpired && !msg.isExpired).toList();
     
     for (final message in expiredMessages) {
       await _deleteMessage(message);
@@ -489,13 +482,11 @@ class MessagingRepository {
   /// Schedule message deletion for disappearing messages
   void _scheduleMessageDeletion(MessageModel message) {
     if (!message.isDisappearing) return;
+    // Skip snaps – they persist until storage TTL removes media.
+    if (message.type == MessageType.snap) return;
 
-    // For snaps, delete immediately after all participants have viewed
-    if (message.type == MessageType.snap) {
-      Timer(const Duration(seconds: 1), () => _deleteMessage(message));
-    }
     // For other disappearing messages, wait until expiration
-    else if (message.expiresAt != null) {
+    if (message.expiresAt != null) {
       final delay = message.expiresAt!.difference(DateTime.now());
       if (delay.isNegative) {
         _deleteMessage(message);
@@ -596,5 +587,101 @@ class MessagingRepository {
       debugPrint('Firestore connectivity test failed: $e');
       return false;
     }
+  }
+
+  /// Create a new group conversation with up to 10 participants.
+  Future<ConversationModel> createGroupConversation({
+    required String groupName,
+    required List<String> participantIds,
+    required Map<String, String> participantUsernames,
+  }) async {
+    final userId = currentUserId;
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Ensure creator is in the participant list
+    final uniqueIds = <String>{...participantIds, userId}.toList();
+
+    if (uniqueIds.length < 2) {
+      throw Exception('Group must contain at least two members');
+    }
+    if (uniqueIds.length > 10) {
+      throw Exception('Group can contain at most 10 participants');
+    }
+
+    // Add creator username if missing
+    final usernames = Map<String, String>.from(participantUsernames);
+    if (!usernames.containsKey(userId)) {
+      // Fetch current user username
+      final doc = await firestore.collection('users').doc(userId).get();
+      usernames[userId] = doc.data()?['username'] as String? ?? 'Unknown';
+    }
+
+    // Ensure all ids have username entry
+    for (final id in uniqueIds) {
+      usernames[id] = usernames[id] ?? 'Unknown';
+    }
+
+    final conversationId = _uuid.v4();
+    final now = DateTime.now();
+
+    final conversation = ConversationModel(
+      id: conversationId,
+      participantIds: uniqueIds,
+      participantUsernames: usernames,
+      isGroup: true,
+      groupName: groupName.trim(),
+      lastViewedTimestamps: {for (var id in uniqueIds) id: now},
+      unreadCounts: {for (var id in uniqueIds) id: 0},
+      createdAt: now,
+      updatedAt: now,
+      deletedFor: [],
+    );
+
+    await firestore
+        .collection('conversations')
+        .doc(conversationId)
+        .set(conversation.toFirestore());
+
+    return conversation;
+  }
+
+  /// Leave a conversation (direct or group). Adds current uid to deletedFor array.
+  Future<void> leaveConversation(String conversationId) async {
+    final uid = currentUserId;
+    if (uid == null) throw Exception('User not authenticated');
+    try {
+      await firestore.collection('conversations').doc(conversationId).update({
+        'deletedFor': ff.FieldValue.arrayUnion([uid]),
+        'updatedAt': ff.FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      ErrorHandler.logError('leave conversation', e);
+      rethrow;
+    }
+  }
+
+  /// Internal helper to determine if a conversation is visible for current user
+  bool _isVisibleConversation(ConversationModel conv, String uid) {
+    return !conv.deletedFor.contains(uid);
+  }
+
+  Future<void> _incrementUnreadCounts(String conversationId, String senderId) async {
+    await firestore.runTransaction((txn) async {
+      final convRef = firestore.collection('conversations').doc(conversationId);
+      final snapshot = await txn.get(convRef);
+      if (!snapshot.exists) return;
+      final data = snapshot.data()!;
+      final currentCounts = Map<String, dynamic>.from(data['unreadCounts'] ?? {});
+      for (final uid in (data['participantIds'] as List)) {
+        if (uid == senderId) continue;
+        final current = (currentCounts[uid] as int?) ?? 0;
+        currentCounts[uid] = current + 1;
+      }
+      txn.update(convRef, {
+        'unreadCounts': currentCounts,
+      });
+    });
   }
 } 
