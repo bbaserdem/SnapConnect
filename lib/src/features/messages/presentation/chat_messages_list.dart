@@ -394,15 +394,16 @@ class ChatMessagesList extends ConsumerWidget {
           height: 200,
           loadingBuilder: (context, child, progress) {
             if (progress == null) return child;
-            return Container(
+            return SizedBox(
               width: 200,
               height: 200,
-              alignment: Alignment.center,
-              color: Colors.black.withValues(alpha: 26),
-              child: CircularProgressIndicator(
-                value: progress.expectedTotalBytes != null
-                    ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                    : null,
+              child: Center(
+                child: CircularProgressIndicator(
+                  value: progress.expectedTotalBytes != null
+                      ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                      : null,
+                  strokeWidth: 3,
+                ),
               ),
             );
           },

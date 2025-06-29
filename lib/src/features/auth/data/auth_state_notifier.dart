@@ -4,6 +4,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_repository.dart';
+import '../../../app/router.dart' show markUserJustSignedUp;
 
 /// Provider that exposes the current Firebase User
 final authUserProvider = StreamProvider<User?>((ref) {
@@ -62,6 +63,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         username: username,
         displayName: displayName,
       );
+      
+      // Mark that user just signed up for routing purposes
+      markUserJustSignedUp();
+      
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(

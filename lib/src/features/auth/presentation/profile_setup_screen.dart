@@ -70,19 +70,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         bio: _bioController.text.trim(),
         interestTags: _selectedInterests.toList(),
       );
+      
+      // Mark profile setup as complete BEFORE navigation
       markProfileSetupComplete(user.uid);
 
       if (mounted) {
-        // Show success message
+        // Show success message first
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile setup completed successfully!'),
             backgroundColor: Colors.green,
+            duration: Duration(milliseconds: 1500),
           ),
         );
         
-        // Navigate to profile page after profile setup
-        context.go('/profile');
+        // Small delay to ensure SnackBar shows, then navigate
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        if (mounted) {
+          // Navigate to profile page after profile setup
+          context.go('/profile');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -173,9 +181,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   labelText: 'Bio',
                   border: OutlineInputBorder(),
                   hintText: 'Share a bit about yourself and your interests...',
+                  alignLabelWithHint: true,
                 ),
                 maxLength: 150,
                 maxLines: 3,
+                textAlignVertical: TextAlignVertical.top,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter a bio';

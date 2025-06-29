@@ -20,14 +20,28 @@ import 'navigation_shell.dart';
 /// Cache for profile setup status to avoid repeated Firebase calls
 final Map<String, bool> _profileSetupCache = {};
 
+/// Track when a user just signed up (to route them to profile setup)
+bool _justSignedUp = false;
+
+/// Mark that a user just signed up
+void markUserJustSignedUp() {
+  _justSignedUp = true;
+}
+
+/// Mark profile setup as completed for a user (used after saving profile).
+void markProfileSetupComplete(String uid) {
+  _profileSetupCache[uid] = true;
+  _justSignedUp = false; // Clear sign-up flag after profile setup
+}
+
 /// Router configuration provider for the application
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authUserProvider);
   final authRepository = ref.watch(authRepositoryProvider);
 
   return GoRouter(
-    initialLocation: '/stories',
-    redirect: (context, state) {
+    initialLocation: '/', // Start at root, let redirect handle routing
+    redirect: (context, state) async {
       // Get the current auth state synchronously
       final user = authState.valueOrNull;
       final isLoggedIn = user != null;
@@ -43,40 +57,55 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // If not logged in and trying to access protected route, redirect to sign in
       if (!isLoggedIn && !isAuthRoute) {
+        // Clear all state when user is not logged in
+        _profileSetupCache.clear();
+        _justSignedUp = false;
         return '/signin';
       }
 
-      // If logged in and trying to access auth route, redirect to main app
+      // If logged in and trying to access auth route, redirect based on profile status
       if (isLoggedIn && isAuthRoute) {
-        return '/';
+        final uid = user.uid;
+        
+        // Check if user just signed up
+        if (_justSignedUp) {
+          return '/profile-setup';
+        }
+        
+        // Check profile setup status for existing sign-ins
+        final hasCompleteProfile = await _checkProfileSetupStatus(uid, authRepository);
+        if (!hasCompleteProfile) {
+          return '/profile-setup';
+        }
+        
+        return '/stories'; // Existing users with complete profiles go to stories
       }
 
-      // Skip profile setup checks for snap edit route
+      // Skip profile setup checks for special routes
       if (isSnapEditRoute) {
         return null;
       }
 
-      // For logged in users, check profile setup status using cache
+      // For logged in users, check profile setup status and route appropriately
       if (isLoggedIn && !isProfileSetupRoute) {
         final uid = user.uid;
-
-        // If we don't yet know, trigger async check and allow navigation
-        if (!_profileSetupCache.containsKey(uid)) {
-          authRepository.hasCompletedProfileSetup(uid).then((complete){
-            _profileSetupCache[uid]=complete;
-            if(!complete && context.mounted){
-              context.go('/profile-setup');
-            }
-          });
-          // permit navigation for now
-        } else if (!_profileSetupCache[uid]!) {
+        
+        // If user just signed up, always go to profile setup
+        if (_justSignedUp) {
           return '/profile-setup';
         }
-      }
-
-      // Clear cache when user logs out
-      if (!isLoggedIn) {
-        _profileSetupCache.clear();
+        
+        // Check cached or fetch profile setup status
+        final hasCompleteProfile = await _checkProfileSetupStatus(uid, authRepository);
+        if (!hasCompleteProfile) {
+          return '/profile-setup';
+        }
+        
+        // If user is on the camera tab (/) and has a complete profile, redirect to stories
+        // This handles the case where existing users open the app
+        if (currentLocation == '/' && hasCompleteProfile) {
+          return '/stories';
+        }
       }
 
       // No redirect needed - let navigation proceed
@@ -205,7 +234,20 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Mark profile setup as completed for a user (used after saving profile).
-void markProfileSetupComplete(String uid) {
-  _profileSetupCache[uid] = true;
+/// Helper function to check profile setup status with caching
+Future<bool> _checkProfileSetupStatus(String uid, AuthRepository authRepository) async {
+  // Return cached result if available
+  if (_profileSetupCache.containsKey(uid)) {
+    return _profileSetupCache[uid]!;
+  }
+  
+  try {
+    // Fetch from Firebase and cache the result
+    final hasCompleteProfile = await authRepository.hasCompletedProfileSetup(uid);
+    _profileSetupCache[uid] = hasCompleteProfile;
+    return hasCompleteProfile;
+  } catch (e) {
+    // On error, assume profile is not complete to be safe
+    return false;
+  }
 } 

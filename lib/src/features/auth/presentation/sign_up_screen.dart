@@ -24,6 +24,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _isUsernameChecking = false;
   bool _isUsernameAvailable = true;
   String? _usernameError;
+  String? _authError; // Track authentication errors
   
   // Track the current username being checked to prevent race conditions
   String? _currentUsernameCheck;
@@ -85,6 +86,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   Future<void> _handleSignUp() async {
+    // Clear any previous auth errors
+    setState(() => _authError = null);
+    
     if (!_formKey.currentState!.validate()) return;
     
     if (_isUsernameChecking) {
@@ -128,57 +132,21 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       if (mounted) {
         final errorMessage = e.toString().replaceAll('Exception: ', '');
         
-        // Show user-friendly error dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red),
-                SizedBox(width: 8),
-                Text('Sign Up Failed'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(errorMessage),
-                const SizedBox(height: 16),
-                if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('already'))
-                  const Text(
-                    '💡 Already have an account? Try signing in instead.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                if (errorMessage.toLowerCase().contains('password') && errorMessage.contains('weak'))
-                  const Text(
-                    '💡 Try using a mix of uppercase, lowercase, numbers, and symbols.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-              if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('already'))
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    context.go('/signin');
-                  },
-                  child: const Text('Sign In'),
-                ),
-            ],
-          ),
-        );
+        // Show generic auth error to prevent email enumeration
+        if (errorMessage.toLowerCase().contains('email') || 
+            errorMessage.toLowerCase().contains('password') ||
+            errorMessage.toLowerCase().contains('auth')) {
+          setState(() {
+            _authError = 'Account creation failed. Please check your details and try again.';
+          });
+          _formKey.currentState?.validate();
+        } else {
+          // For username-specific errors, show the actual message
+          setState(() {
+            _authError = errorMessage;
+          });
+          _formKey.currentState?.validate();
+        }
       }
     }
   }
@@ -302,7 +270,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   errorText: _usernameError,
                 ),
                 onChanged: (value) {
+                  // Clear auth errors when user is typing
+                  if (_authError != null) {
+                    setState(() => _authError = null);
+                  }
+                  
                   if (value.length >= 3) {
+                    // Clear any previous "too short" errors when length is sufficient
+                    if (_usernameError != null && _usernameError!.contains('3 characters')) {
+                      setState(() => _usernameError = null);
+                    }
+                    
                     // Debounce the username check
                     Future.delayed(const Duration(milliseconds: 500), () {
                       if (mounted && _usernameController.text == value) {
@@ -357,6 +335,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   }
                   if (value.length < 6) {
                     return 'Password must be at least 6 characters';
+                  }
+                  // Show auth error on password field for consistency
+                  if (_authError != null) {
+                    return _authError;
                   }
                   return null;
                 },

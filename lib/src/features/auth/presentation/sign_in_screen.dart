@@ -17,6 +17,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _authError; // Track authentication errors
 
   @override
   void dispose() {
@@ -26,6 +27,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   Future<void> _handleSignIn() async {
+    // Clear any previous auth errors
+    setState(() => _authError = null);
+    
     if (!_formKey.currentState!.validate()) return;
 
     try {
@@ -52,59 +56,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final errorMessage = e.toString().replaceAll('Exception: ', '');
-        
-        // Show more user-friendly error dialog instead of just snackbar
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red),
-                SizedBox(width: 8),
-                Text('Sign In Failed'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(errorMessage),
-                const SizedBox(height: 16),
-                if (errorMessage.toLowerCase().contains('password'))
-                  const Text(
-                    '💡 Forgot your password? Use the "Forgot Password?" link below.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('not found'))
-                  const Text(
-                    '💡 Don\'t have an account yet? Try signing up instead.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-              if (errorMessage.toLowerCase().contains('email') && errorMessage.contains('not found'))
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    context.go('/signup');
-                  },
-                  child: const Text('Sign Up'),
-                ),
-            ],
-          ),
-        );
+        // Always show generic message to prevent email enumeration
+        setState(() {
+          _authError = 'Wrong email or password';
+        });
+        // Trigger form validation to show the error
+        _formKey.currentState?.validate();
       }
     }
   }
@@ -194,6 +151,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
+                  }
+                  // Show auth error on password field for consistency
+                  if (_authError != null) {
+                    return _authError;
                   }
                   return null;
                 },
