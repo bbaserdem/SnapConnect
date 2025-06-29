@@ -70,6 +70,7 @@
             langchain-perplexity
             langchain-core
             langchain-tests
+            faiss
             # System packages
             python-dotenv
             jupyter
