@@ -13,6 +13,7 @@ import '../data/friends_notifier.dart';
 import 'add_friend_dialog.dart';
 import 'package:snapconnect/src/features/profile/data/public_user_provider.dart';
 import '../data/user_search_provider.dart';
+import '../../auth/auth.dart'; // Import auth to get current user
 
 /// Main friends screen widget
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -64,10 +65,14 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
           labelColor: colorScheme.primary,
           unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.6),
           indicatorColor: colorScheme.primary,
-          tabs: const [
-            Tab(text: 'My Friends'),
-            Tab(text: 'Search'),
-            Tab(text: 'Requests'),
+          tabs: [
+            const Tab(text: 'My Friends'),
+            const Tab(text: 'Search'),
+            Tab(
+              child: _RequestsTabWithBadge(
+                hasNotification: friendsState.incoming.isNotEmpty,
+              ),
+            ),
           ],
         ),
       ),
@@ -183,6 +188,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
         final suggestions = ref.watch(usernameSearchProvider(query));
         final acceptedIds = ref.watch(acceptedFriendIdsProvider);
         final pendingIds = ref.watch(friendsProvider).outgoing.map((e) => e.friendUid).toSet();
+        final currentUser = ref.watch(authUserProvider).valueOrNull; // Get current user
 
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -204,12 +210,17 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
               Expanded(
                 child: suggestions.when(
                   data: (list) {
-                    print('[FriendsSearch] results len=${list.length}');
-                    if (list.isEmpty) return const Center(child: Text('No users found'));
+                    // Filter out the current user from search results
+                    final filteredList = currentUser != null 
+                        ? list.where((item) => item.uid != currentUser.uid).toList()
+                        : list;
+                    
+                    print('[FriendsSearch] results len=${list.length}, filtered len=${filteredList.length}');
+                    if (filteredList.isEmpty) return const Center(child: Text('No users found'));
                     return ListView.builder(
-                      itemCount: list.length,
+                      itemCount: filteredList.length,
                       itemBuilder: (context, index) {
-                        final item = list[index];
+                        final item = filteredList[index];
                         final isFriend = acceptedIds.contains(item.uid);
                         final isPending = pendingIds.contains(item.uid);
                         return ListTile(
@@ -381,6 +392,50 @@ class _PendingTile extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Custom tab widget with a notification badge for the Requests tab
+class _RequestsTabWithBadge extends ConsumerWidget {
+  final bool hasNotification;
+
+  const _RequestsTabWithBadge({required this.hasNotification});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final incomingCount = ref.watch(friendsProvider).incoming.length;
+    
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        const Text('Requests'),
+        if (hasNotification)
+          Positioned(
+            right: -8,
+            top: -8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              child: Text(
+                '$incomingCount',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
     );
   }
 } 

@@ -8,6 +8,14 @@ Tracker for missing and buggy features.
 - [x] "Username must be 3 characters or longer" message persists even when username is being typed.
 - [x] Bio prompt is vertically centered, but jumps to top centering
 - [x] Loading spinner in messages is clipped by a square box
+- [x] Users can see themselves as valid targets for friend requests in search
+- [x] Firestore permission denied errors when not on stories/friends screens
+- [x] Missing notification badge on "Requests" tab to indicate incoming friend requests
+- [x] Permission denied error when accepting friend requests
+- [x] Camera tab inaccessible - redirects to stories when clicked
+- [x] Story cards always open from the first story instead of the clicked story
+- [x] Snaps remain viewable after being viewed (privacy issue - should expire after one view)
+- [x] Permission denied error when marking snaps as viewed due to Firestore rules
 - [ ] Snapped pic and image not lining up
 
 ### Navigation routing

@@ -109,6 +109,7 @@ class StoriesScreen extends ConsumerWidget {
                 timestamp: _formatTimestamp(DateTime.now().difference(media.postedAt)),
                 hasNewStory: false,
                 storyDoc: StoryDocument(userId: user.uid, media: [media], updatedAt: media.postedAt),
+                storyIndex: index,
               ),
             );
           },
@@ -151,6 +152,7 @@ class StoriesScreen extends ConsumerWidget {
           timestamp: timestamp,
           hasNewStory: true,
           storyDoc: storyDoc,
+          storyIndex: 0,
         );
       },
     );
@@ -162,6 +164,7 @@ class StoriesScreen extends ConsumerWidget {
     required String uid,
     required String timestamp,
     required bool hasNewStory,
+    required int storyIndex,
     StoryDocument? storyDoc,
   }) {
     final theme = Theme.of(context);
@@ -171,7 +174,7 @@ class StoriesScreen extends ConsumerWidget {
 
     return Card(
       child: InkWell(
-        onTap: () => _openStory(context, uid),
+        onTap: () => _openStory(context, uid, storyIndex),
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
@@ -309,9 +312,9 @@ class StoriesScreen extends ConsumerWidget {
     );
   }
 
-  /// Opens a story viewer (placeholder functionality)
-  void _openStory(BuildContext context, String userName) {
-    context.push('/story-viewer/$userName');
+  /// Opens a story viewer with the specified story index
+  void _openStory(BuildContext context, String userId, int storyIndex) {
+    context.push('/story-viewer/$userId?index=$storyIndex');
   }
 
   String _formatTimestamp(Duration diff) {

@@ -119,7 +119,7 @@ final storiesRepositoryProvider = Provider<StoriesRepository>((ref) {
   return StoriesRepository();
 });
 
-final storiesProvider = StateNotifierProvider<StoriesNotifier, StoriesState>((ref) {
+final storiesProvider = StateNotifierProvider.autoDispose<StoriesNotifier, StoriesState>((ref) {
   final repo = ref.watch(storiesRepositoryProvider);
   return StoriesNotifier(repo, ref);
 }); 

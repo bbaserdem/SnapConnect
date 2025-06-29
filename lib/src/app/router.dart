@@ -40,7 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
 
   return GoRouter(
-    initialLocation: '/', // Start at root, let redirect handle routing
+    initialLocation: '/stories', // Start at stories for existing users
     redirect: (context, state) async {
       // Get the current auth state synchronously
       final user = authState.valueOrNull;
@@ -99,12 +99,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         final hasCompleteProfile = await _checkProfileSetupStatus(uid, authRepository);
         if (!hasCompleteProfile) {
           return '/profile-setup';
-        }
-        
-        // If user is on the camera tab (/) and has a complete profile, redirect to stories
-        // This handles the case where existing users open the app
-        if (currentLocation == '/' && hasCompleteProfile) {
-          return '/stories';
         }
       }
 
@@ -203,7 +197,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/story-viewer/:userId',
         name: 'story-viewer',
-        builder: (context, state) => StoryViewerScreen(userId: state.pathParameters['userId']!),
+        builder: (context, state) {
+          final storyIndex = state.uri.queryParameters['index'];
+          return StoryViewerScreen(
+            userId: state.pathParameters['userId']!,
+            initialIndex: storyIndex != null ? int.tryParse(storyIndex) ?? 0 : 0,
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -121,6 +121,8 @@ final friendsProvider = StateNotifierProvider<FriendsNotifier, FriendsState>((re
 });
 
 /// Convenience provider exposing accepted friend ids only.
+/// This provider is NOT auto-dispose because it's used across multiple features
+/// (stories, messages, camera) that need friend data even when not on friends screen.
 final acceptedFriendIdsProvider = Provider<List<String>>((ref) {
   return ref.watch(friendsProvider).acceptedIds;
 }); 

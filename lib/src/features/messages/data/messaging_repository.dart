@@ -275,10 +275,32 @@ class MessagingRepository {
   /// Mark a message as viewed
   Future<void> markMessageAsViewed(String messageId, String userId) async {
     try {
-      await firestore.collection('messages').doc(messageId).update({
+      // First, get the message to check if it's a snap and who sent it
+      final messageDoc = await firestore.collection('messages').doc(messageId).get();
+      if (!messageDoc.exists) return;
+      
+      final messageData = messageDoc.data()!;
+      final messageType = messageData['type'] as String?;
+      final senderId = messageData['senderId'] as String?;
+      final viewedBy = List<String>.from(messageData['viewedBy'] as List? ?? []);
+      
+      // Check if user already viewed this message
+      if (viewedBy.contains(userId)) return;
+      
+      // For snaps, mark as expired when viewed by someone other than the sender
+      final isSnap = messageType == 'snap';
+      final isViewedByRecipient = isSnap && senderId != userId;
+      
+      final updateData = <String, dynamic>{
         'viewedBy': ff.FieldValue.arrayUnion([userId]),
-      });
-      // No immediate deletion logic for snaps; they remain until TTL/expiry.
+      };
+      
+      // Mark snap as expired when viewed by recipient
+      if (isViewedByRecipient) {
+        updateData['isExpired'] = true;
+      }
+      
+      await firestore.collection('messages').doc(messageId).update(updateData);
     } catch (e) {
       ErrorHandler.logError('mark message as viewed', e);
     }

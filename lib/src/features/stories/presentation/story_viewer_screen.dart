@@ -16,18 +16,29 @@ import '../data/stories_notifier.dart';
 import '../data/story_model.dart';
 
 class StoryViewerScreen extends ConsumerStatefulWidget {
-  const StoryViewerScreen({required this.userId, super.key});
+  const StoryViewerScreen({
+    required this.userId, 
+    this.initialIndex = 0,
+    super.key,
+  });
 
   final String userId;
+  final int initialIndex;
 
   @override
   ConsumerState<StoryViewerScreen> createState() => _StoryViewerScreenState();
 }
 
 class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   Timer? _timer;
   VideoPlayerController? _videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   void dispose() {
@@ -50,6 +61,13 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
     if (storyDoc.media.isEmpty) {
       return const Scaffold(body: Center(child: Text('No story')));
+    }
+
+    // Ensure the current index is within bounds
+    if (_currentIndex >= storyDoc.media.length) {
+      _currentIndex = storyDoc.media.length - 1;
+    } else if (_currentIndex < 0) {
+      _currentIndex = 0;
     }
 
     final media = storyDoc.media[_currentIndex];

@@ -72,6 +72,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           _isUsernameChecking = false;
           _usernameError = isAvailable ? null : 'Username is already taken';
         });
+        // Trigger form validation to update the UI
+        Future.microtask(() => _formKey.currentState?.validate());
       }
     } catch (e) {
       // Only update state if this is still the current username being checked
@@ -81,6 +83,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           _isUsernameAvailable = false;
           _usernameError = 'Failed to check username availability: ${e.toString()}';
         });
+        // Trigger form validation to update the UI
+        Future.microtask(() => _formKey.currentState?.validate());
       }
     }
   }
@@ -279,6 +283,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     // Clear any previous "too short" errors when length is sufficient
                     if (_usernameError != null && _usernameError!.contains('3 characters')) {
                       setState(() => _usernameError = null);
+                      // Trigger validation to clear the red outline
+                      Future.microtask(() => _formKey.currentState?.validate());
                     }
                     
                     // Debounce the username check
@@ -294,25 +300,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       _isUsernameChecking = false;
                       _currentUsernameCheck = null;
                     });
+                    // Trigger validation to show/update errors immediately
+                    Future.microtask(() => _formKey.currentState?.validate());
                   }
                 },
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter a username';
                   }
-                  if (value.length < 3) {
+                  
+                  // Only show length error if user hasn't typed enough characters
+                  // AND we're not currently checking availability
+                  if (value.length < 3 && !_isUsernameChecking) {
                     return 'Username must be at least 3 characters';
                   }
+                  
                   if (value.length > 30) {
                     return 'Username must be less than 30 characters';
                   }
                   if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
                     return 'Username can only contain letters, numbers, and underscores';
                   }
-                  // Check if there's an ongoing availability check error
-                  if (_usernameError != null) {
+                  
+                  // Only show availability check errors if user has typed enough characters
+                  if (value.length >= 3 && _usernameError != null) {
                     return _usernameError;
                   }
+                  
                   return null;
                 },
               ),
