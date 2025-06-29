@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration - TEMPORARILY DISABLED
-    // id("com.google.gms.google-services")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
     // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -12,6 +12,15 @@ android {
     namespace = "com.example.snapconnect"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
+
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("../keystores/debug.keystore")
+            storePassword = "android"
+            keyAlias = "AndroidDebugKey"
+            keyPassword = "android"
+        }
+    }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -43,8 +52,8 @@ android {
 }
 
 dependencies {
-    // Import the Firebase BoM - TEMPORARILY DISABLED
-    // implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
 }
 
 flutter {

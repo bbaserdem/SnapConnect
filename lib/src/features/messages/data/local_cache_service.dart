@@ -44,9 +44,7 @@ class LocalCacheService {
         .toList();
 
     await _isar!.writeTxn(() async {
-      for (final conv in cached) {
-        await _isar!.cachedConversations.put(conv);
-      }
+      await _isar!.cachedConversations.putAllByConversationId(cached);
     });
   }
 
@@ -58,9 +56,7 @@ class LocalCacheService {
     final cached = messages.map(CachedMessage.fromMessageModel).toList();
 
     await _isar!.writeTxn(() async {
-      for (final msg in cached) {
-        await _isar!.cachedMessages.put(msg);
-      }
+      await _isar!.cachedMessages.putAllByMessageId(cached);
     });
   }
 

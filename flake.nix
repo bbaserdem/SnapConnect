@@ -81,7 +81,7 @@
           ANDROID_SDK_ROOT = "${ANDROID_HOME}";
           ANDROID_NDK_ROOT = "${ANDROID_HOME}/ndk-bundle";
           CMDLINE_TOOLS_ROOT = "${devSdk}/libexec/android-sdk/cmdline-tools/${cmdLineToolsVersion}";
-          JAVA_HOME = "${pkgs.jdk21.home}";
+          JAVA_HOME = "${pkgs.jdk21}";
           FLUTTER_ROOT = pkgs.flutter;
           DART_ROOT = "${pkgs.flutter}/bin/cache/dart-sdk";
           GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${devSdk}/libexec/android-sdk/build-tools/${buildToolsVersion}/aapt2";
@@ -117,7 +117,7 @@
           # are located in the `$PUB_CACHE/bin` directory.
           shellHook = ''
             # Configure Gradle to find the JDK 17 toolchain in the Nix store.
-            export GRADLE_OPTS="-Dorg.gradle.java.installations.paths=${pkgs.jdk17.home} $GRADLE_OPTS"
+            export GRADLE_OPTS="-Dorg.gradle.java.installations.paths=${pkgs.jdk17} $GRADLE_OPTS"
 
             # Dart/Flutter pub cache setup
             if [ -z "$PUB_CACHE" ]; then
