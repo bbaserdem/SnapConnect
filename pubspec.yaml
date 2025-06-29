@@ -27,6 +27,9 @@ version: 0.2.0
 environment:
   sdk: ^3.8.1
 
+# Use YAML anchors to ensure all Isar packages have the same version
+isar_version: &isar_version ^3.1.0+1
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -66,7 +69,7 @@ dependencies:
   video_thumbnail: ^0.5.3
 
   # Local Database for Caching
-  isar: 
+  isar:
     version: 3.1.8
     hosted: https://pub.isar-community.dev/
   isar_flutter_libs:
@@ -95,7 +98,7 @@ dev_dependencies:
   isar_generator:
     version: 3.1.8
     hosted: https://pub.isar-community.dev/
-  build_runner: ^2.5.4
+  build_runner: ^2.4.13
   # Generates platform-specific launcher icons from a single source image
   flutter_launcher_icons: ^0.14.4
 
