@@ -119,6 +119,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Numerous UI polish items, connection banners, and error-handling improvements across camera, messaging, and friends modules.
 
+## [0.2.2] - 2024-12-25
+### Fixed - Bug Fixes & UI Polish ✅
+- **Authentication UX**: Made email/password error handling consistent with red validation text to prevent email enumeration
+- **Form Validation**: Fixed username validation to properly clear "must be 3 characters" error when user types valid length
+- **UI Alignment**: Corrected bio text field alignment to start from top instead of being vertically centered
+- **Loading Spinners**: Fixed clipped circular progress indicators in messages tab by removing constraining containers
+- **Friend Search**: Filtered out current user from friend search results to prevent self-friend requests
+- **Router Issues**: Resolved navigation routing bugs including camera tab access and proper sign-up flow
+- **Friend Requests**: Fixed Firestore permission errors when accepting friend requests through symmetric relationship rules
+- **Notifications**: Added red notification badge to "Requests" tab to improve UX workflow for incoming friend requests
+- **Story Navigation**: Fixed story cards to open specific stories instead of always starting from the first one
+- **Snap Privacy**: **CRITICAL FIX** - Snaps now properly expire after being viewed once by recipients (major privacy issue)
+- **Firestore Permissions**: Updated security rules to allow snap expiration marking while maintaining security
+
+### Enhanced
+- **Friend UX**: Added notification count badges on both navigation tabs and internal requests tab
+- **Error Logging**: Enhanced authentication error logging with specific error codes for debugging
+- **Security**: Improved Firestore rules to properly handle symmetric friend relationships and message viewing
+- **Navigation**: Refined router logic to prevent excessive redirects while maintaining proper user flows
+
+### Technical
+- Updated Firestore security rules for messages collection to allow `isExpired` field updates
+- Enhanced `markMessageAsViewed` method to properly expire snaps when viewed by recipients
+- Improved router configuration to handle existing vs new user flows correctly
+- Added story index parameter support for direct story navigation
+
 ---
 
 ## Version Strategy
