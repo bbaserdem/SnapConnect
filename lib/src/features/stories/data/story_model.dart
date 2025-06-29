@@ -42,6 +42,7 @@ class StoryMedia {
   final String type; // 'photo' or 'video'
   final DateTime postedAt;
   final int? duration; // seconds – only relevant for photos
+  final List<String> tags; // optional list of tags for this media
 
   const StoryMedia({
     required this.id,
@@ -49,6 +50,7 @@ class StoryMedia {
     required this.type,
     required this.postedAt,
     this.duration,
+    this.tags = const [],
   });
 
   /// Create [StoryMedia] from Firestore map.
@@ -59,6 +61,7 @@ class StoryMedia {
       type: map['type'] as String,
       postedAt: (map['postedAt'] as Timestamp).toDate(),
       duration: map['duration'] as int?,
+      tags: List<String>.from(map['tags'] as List? ?? const []),
     );
   }
 
@@ -69,6 +72,7 @@ class StoryMedia {
         'type': type,
         'postedAt': Timestamp.fromDate(postedAt),
         if (duration != null) 'duration': duration,
+        if (tags.isNotEmpty) 'tags': tags,
       };
 }
 

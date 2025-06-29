@@ -97,6 +97,20 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                 onPressed: () => context.pop(),
               ),
             ),
+            if (media.tags.isNotEmpty && media.type == StoryMediaType.photo)
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 24,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.center,
+                    children: media.tags.map((tag) => _buildTagChip(tag)).toList(),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -192,5 +206,29 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
+  }
+
+  Widget _buildTagChip(String tag) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _titleCase(tag),
+        style: const TextStyle(color: Colors.white, fontSize: 12),
+      ),
+    );
+  }
+
+  String _titleCase(String input) {
+    if (input.isEmpty) return input;
+    return input
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? word
+            : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 } 

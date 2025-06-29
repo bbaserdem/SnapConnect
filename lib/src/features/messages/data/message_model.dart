@@ -29,6 +29,7 @@ class MessageModel {
   final DateTime? expiresAt; // When the message should be deleted
   final bool isGroupMessage;
   final bool isExpired; // indicates snap has disappeared but bubble remains
+  final List<String> tags; // optional tags associated with the snap (for type == snap)
 
   const MessageModel({
     required this.id,
@@ -45,6 +46,7 @@ class MessageModel {
     this.expiresAt,
     required this.isGroupMessage,
     this.isExpired = false,
+    this.tags = const [],
   });
 
   /// Create a MessageModel from a Firestore document
@@ -72,6 +74,7 @@ class MessageModel {
           : null,
       isGroupMessage: data['isGroupMessage'] as bool? ?? false,
       isExpired: data['isExpired'] as bool? ?? false,
+      tags: List<String>.from(data['tags'] as List? ?? const []),
     );
   }
 
@@ -91,6 +94,7 @@ class MessageModel {
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'isGroupMessage': isGroupMessage,
       'isExpired': isExpired,
+      if (tags.isNotEmpty) 'tags': tags,
     };
   }
 
@@ -109,6 +113,7 @@ class MessageModel {
     DateTime? expiresAt,
     bool? isGroupMessage,
     bool? isExpired,
+    List<String>? tags,
   }) {
     return MessageModel(
       id: id,
@@ -125,6 +130,7 @@ class MessageModel {
       expiresAt: expiresAt ?? this.expiresAt,
       isGroupMessage: isGroupMessage ?? this.isGroupMessage,
       isExpired: isExpired ?? this.isExpired,
+      tags: tags ?? this.tags,
     );
   }
 
@@ -150,4 +156,7 @@ class MessageModel {
   bool get isDisappearing {
     return type == MessageType.snap || expiresAt != null;
   }
+
+  /// Whether the message has tag metadata
+  bool get hasTags => tags.isNotEmpty;
 } 

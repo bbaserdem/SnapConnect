@@ -208,6 +208,16 @@ class ChatMessagesList extends ConsumerWidget {
                 ),
               ),
             _buildMessageContent(context, ref, message, isMe),
+            if (message.type == MessageType.snap && message.hasTags) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: message.tags
+                    .map((tag) => _buildTagChip(context, tag, isMe))
+                    .toList(),
+              ),
+            ],
             const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -426,5 +436,33 @@ class ChatMessagesList extends ConsumerWidget {
     } else {
       return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
     }
+  }
+
+  Widget _buildTagChip(BuildContext context, String tag, bool isMe) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isMe ? colorScheme.onPrimary.withOpacity(0.15) : colorScheme.primary.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _titleCase(tag),
+        style: TextStyle(
+          fontSize: 11,
+          color: isMe ? colorScheme.onPrimary : colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+
+  String _titleCase(String input) {
+    if (input.isEmpty) return input;
+    return input
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? word
+            : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 } 

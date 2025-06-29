@@ -7,23 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../data/auth_repository.dart';
 import '../data/auth_state_notifier.dart';
 import 'package:snapconnect/src/app/router.dart' show markProfileSetupComplete;
+import 'package:snapconnect/src/common/utils/tag_service.dart';
 
-/// Available interest tags for users to select from
-const availableInterestTags = [
-  'Tattoos',
-  'Piercings',
-  'Body Modification',
-  'Scarification',
-  'Traditional',
-  'Neo-Traditional',
-  'Japanese',
-  'Blackwork',
-  'Color',
-  'Minimalist',
-  'Geometric',
-  'Custom Jewelry',
-  'Implants',
-];
+/// Interest tags are now loaded dynamically from assets/tags.txt.
+/// A curated subset (first 9 tags) is displayed to the user.
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -111,6 +98,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  // Convert a tag to Title Case for display (e.g., "tattoos" -> "Tattoos")
+  String _titleCase(String input) {
+    if (input.isEmpty) return input;
+    return input
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? word
+            : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 
   @override
@@ -211,25 +209,34 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: availableInterestTags.map((tag) {
-                      final isSelected = _selectedInterests.contains(tag);
-                      return FilterChip(
-                        label: Text(tag),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedInterests.add(tag);
-                            } else {
-                              _selectedInterests.remove(tag);
-                            }
-                          });
-                        },
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final tagsAsync = ref.watch(curatedTagsProvider);
+                      return tagsAsync.when(
+                        data: (tags) => Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: tags.map((tag) {
+                            final isSelected = _selectedInterests.contains(tag);
+                            return FilterChip(
+                              label: Text(_titleCase(tag)),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedInterests.add(tag);
+                                  } else {
+                                    _selectedInterests.remove(tag);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (e, st) => Text('Failed to load tags: $e'),
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
               ),

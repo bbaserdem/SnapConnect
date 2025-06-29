@@ -1,0 +1,188 @@
+- tag: tattoos
+  category: tattoos
+  priority: 1
+- tag: piercings
+  category: piercings
+  priority: 1
+- tag: microdermals
+  category: microdermals
+  priority: 1
+- tag: implants
+  category: implants
+  priority: 1
+- tag: heavy mods
+  category: heavy mods
+  priority: 1
+- tag: suspension
+  category: suspension
+  priority: 1
+- tag: scarification
+  category: scarification
+  priority: 1
+- tag: stretched piercings
+  category: stretched piercings
+  priority: 1
+- tag: play piercings
+  category: play piercings
+  priority: 1
+
+# Tattoo styles
+- tag: blackwork
+  category: tattoos
+  priority: 2
+- tag: blackout
+  category: tattoos
+  priority: 2
+- tag: american traditional
+  category: tattoos
+  priority: 2
+- tag: tribal
+  category: tattoos
+  priority: 2
+- tag: realism
+  category: tattoos
+  priority: 2
+- tag: watercolor
+  category: tattoos
+  priority: 2
+- tag: minimalist
+  category: tattoos
+  priority: 2
+- tag: dotwork
+  category: tattoos
+  priority: 2
+- tag: linework
+  category: tattoos
+  priority: 2
+- tag: geometric
+  category: tattoos
+  priority: 2
+- tag: stick and poke
+  category: tattoos
+  priority: 2
+- tag: biomechanical
+  category: tattoos
+  priority: 2
+- tag: irezumi
+  category: tattoos
+  priority: 2
+- tag: polynesian
+  category: tattoos
+  priority: 2
+
+# Piercing types
+- tag: lobe piercing
+  category: piercings
+  priority: 2
+- tag: cartillage piercing
+  category: piercings
+  priority: 2
+- tag: nose piercing
+  category: piercings
+  priority: 2
+- tag: septum piercing
+  category: piercings
+  priority: 2
+- tag: bridge piercing
+  category: piercings
+  priority: 2
+- tag: eyebrow piercing
+  category: piercings
+  priority: 2
+- tag: lip piercing
+  category: piercings
+  priority: 2
+- tag: tongue piercing
+  category: piercings
+  priority: 2
+- tag: navel piercing
+  category: piercings
+  priority: 2
+- tag: nipple piercing
+  category: piercings
+  priority: 2
+- tag: surface piercing
+  category: piercings
+  priority: 2
+- tag: helix
+  category: piercings
+  priority: 2
+- tag: industrial
+  category: piercings
+  priority: 2
+- tag: conch
+  category: piercings
+  priority: 2
+- tag: tragus
+  category: piercings
+  priority: 2
+- tag: daith
+  category: piercings
+  priority: 2
+- tag: rook
+  category: piercings
+  priority: 2
+- tag: nostril
+  category: piercings
+  priority: 2
+- tag: labret
+  category: piercings
+  priority: 2
+- tag: monroe
+  category: piercings
+  priority: 2
+- tag: medusa
+  category: piercings
+  priority: 2
+
+# Stretched / expanded mods
+- tag: stretched lobes
+  category: stretched piercings
+  priority: 2
+- tag: ear weights
+  category: stretched piercings
+  priority: 2
+
+# Implant / biohacking mods
+- tag: subdermal implants
+  category: implants
+  priority: 2
+- tag: thumb spines
+  category: implants
+  priority: 2
+- tag: rfid chips
+  category: implants
+  priority: 2
+- tag: biotech
+  category: implants
+  priority: 2
+
+# Heavy modifications
+- tag: tongue split
+  category: heavy mods
+  priority: 2
+- tag: nipple removal
+  category: heavy mods
+  priority: 2
+- tag: navel removal
+  category: heavy mods
+  priority: 2
+- tag: ear pointing
+  category: heavy mods
+  priority: 2
+- tag: coin slot
+  category: heavy mods
+  priority: 2
+- tag: scleral tattoo
+  category: heavy mods
+  priority: 2
+
+# Scarification / branding
+- tag: branding
+  category: scarification
+  priority: 2
+
+# Suspension specific (kept for completeness)
+- tag: suspension rigging
+  category: suspension
+  priority: 2 

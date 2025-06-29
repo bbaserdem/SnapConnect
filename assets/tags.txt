@@ -6,7 +6,9 @@ heavy mods
 suspension
 scarification
 stretched piercings
+play piercings
 blackwork
+blackout
 american traditional
 tribal
 realism
@@ -19,17 +21,28 @@ stick and poke
 biomechanical
 irezumi
 polynesian
-ear piercing
+lobe piercing
 cartillage piercing
 nose piercing
-septum
-bridge
-eyebrow
+septum piercing
+bridge piercing
+eyebrow piercing
 lip piercing
 tongue piercing
 navel piercing
 nipple piercing
-surface piercings
+surface piercing
+stretched lobes
+helix
+industrial
+conch
+tragus
+daith
+rook
+nostril
+labret
+monroe
+medusa
 microdermals
 ear weights
 subdermal implants
@@ -44,4 +57,3 @@ branding
 ear pointing
 coin slot
 suspension
-play piercing
