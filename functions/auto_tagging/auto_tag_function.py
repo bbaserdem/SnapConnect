@@ -4,8 +4,8 @@ Firebase Cloud Function (Python) for automatic tag suggestion.
 Triggered on *finalize* (upload) events for **both** `messages/` and `stories/` folders
 inside the default Storage bucket. The function:
 
-1. Generates a signed URL valid for a few minutes.
-2. Calls GPT-4o-Vision with that URL ➔ image description.
+1. Downloads image data and encodes as base64 for OpenAI Vision API.
+2. Calls GPT-4o-Vision with base64 data ➔ image description.
 3. Embeds description (OpenAI `text-embedding-ada-002`).
 4. FAISS similarity search over `tags.index` (built offline) to fetch top-k tags.
 5. GPT-4o review call to filter to ≤3 tags.
@@ -53,7 +53,6 @@ VISION_MODEL = "gpt-4o-mini"  # update if needed
 CHAT_MODEL = "gpt-4o-mini"
 TOP_K = 8  # retrieve top-k before validation
 FINAL_K = 3  # tags to write back
-SIGNED_URL_TTL = 15 * 60  # seconds
 
 # --------------------------------------------------------------------------------------
 # Lazy-load FAISS index & tag list into global memory (warm across invocations)
@@ -92,23 +91,47 @@ def auto_tag_image(cloud_event):
 
     print("Received upload event for", file_path)
 
-    openai.api_key = os.environ["OPENAI_API_KEY"]
+    import openai  # Import here to ensure it's available when setting the API key
+    
+    openai_api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_KEY")
+    if not openai_api_key:
+        raise RuntimeError("OpenAI API key not set. Provide OPENAI_API_KEY env var or configure openai.key.")
+    openai.api_key = openai_api_key
 
     from google.cloud import storage  # local import to avoid grpc load at discovery
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(file_path)
 
-    # Create signed URL so OpenAI Vision can fetch the image
-    signed_url = blob.generate_signed_url(expiration=SIGNED_URL_TTL, method="GET")
+    # Download image data and encode as base64 for OpenAI Vision
+    image_data = blob.download_as_bytes()
+    image_base64 = base64.b64encode(image_data).decode('utf-8')
+    
+    # Determine the image MIME type from file extension
+    file_ext = file_path.split('.')[-1].lower()
+    mime_type = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg', 
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }.get(file_ext, 'image/jpeg')  # default to jpeg
+    
+    data_url = f"data:{mime_type};base64,{image_base64}"
 
     # 1. Vision description ------------------------------------------------------
     vision_prompt = [
         {
             "type": "text",
-            "text": "Describe the visual content for tagging a body-modification social app.",
+            "text":(
+                "Describe the visual content for tagging a body-modification social app. "
+                "If it's a tattoo, specify the style and location. "
+                "If it's a piercing, try to specify the type and location. "
+                "Make sure your description pertains to just the body modification, not the person or the background. "
+                "If the image is not a body modification, return 'none'. "
+            ),
         },
-        {"type": "image_url", "image_url": {"url": signed_url}},
+        {"type": "image_url", "image_url": {"url": data_url}},
     ]
     vision_resp = openai.chat.completions.create(
         model=VISION_MODEL,
@@ -135,19 +158,34 @@ def auto_tag_image(cloud_event):
 
     # 4. GPT-4 filtering ---------------------------------------------------------
     system_prompt = (
-        f"You are selecting at most {FINAL_K} relevant tags from a list for an image described as:\n'{description}'\nTags: {', '.join(candidate_tags)}"
+        f"You must select at most {FINAL_K} relevant tags from the provided list for an image described as: '{description}'\n\n"
+        f"Available tags: {', '.join(candidate_tags)}\n\n"
+        f"CRITICAL: Respond with ONLY the selected tags, comma-separated, no explanations. "
+        f"If no tags are relevant, respond with 'none'. "
+        f"Do not include any reasoning, descriptions, or additional text."
     )
     filter_resp = openai.chat.completions.create(
         model=CHAT_MODEL,
-        messages=[{"role": "system", "content": system_prompt}],
-        max_tokens=64,
+        messages=[{"role": "user", "content": system_prompt}],
+        max_tokens=32,
+        temperature=0,
     )
-    validated = [
-        t.strip().lower()
-        for t in filter_resp.choices[0].message.content.split(",")
-    ]
-    validated = [t for t in validated if t]
-    validated = validated[:FINAL_K]
+    response_text = filter_resp.choices[0].message.content.strip().lower()
+    print("GPT filter response:", response_text)
+    
+    # Handle the 'none' case or empty response
+    if response_text == 'none' or not response_text:
+        validated = []
+    else:
+        # Split by comma and clean up each tag
+        validated = [
+            t.strip().lower()
+            for t in response_text.split(",")
+            if t.strip()
+        ]
+        # Only keep tags that were actually in our candidate list
+        validated = [t for t in validated if t in [c.lower() for c in candidate_tags]]
+        validated = validated[:FINAL_K]
 
     print("Validated tags:", validated)
 
@@ -235,7 +273,9 @@ DEFAULT_BUCKET = "snapconnect-bodymod.firebasestorage.app"
 
 # Register the function with Firebase if the SDK is available
 if fb_funcs is not None:
-    auto_tag_image_fn = storage_fn.on_object_finalized(bucket=DEFAULT_BUCKET)(auto_tag_image)
-
-import openai
+    from firebase_functions import params
+    auto_tag_image_fn = storage_fn.on_object_finalized(
+        bucket=DEFAULT_BUCKET,
+        secrets=[params.SecretParam("OPENAI_API_KEY")]
+         )(auto_tag_image)
 
