@@ -57,22 +57,14 @@
         # RAG toolkit with python; as of 06-2025 python 3.13 is the version with pkgs
         devPython = pkgs.python313.withPackages (python-pkgs:
           with python-pkgs; [
-            # Pinecone packages
-            pinecone-client
-            pinecone-plugin-inference
-            pinecone-plugin-interface
-            # Langsmith packages
-            langsmith
-            langchain-anthropic
-            langchain-aws
-            langchain-community
-            langchain-openai
-            langchain-perplexity
-            langchain-core
-            langchain-tests
+            # Auto tagging function packages
+            openai
+            firebase-admin
+            google-cloud-storage
+            google-cloud-firestore
             faiss
-            # System packages
-            python-dotenv
+            numpy
+            # Tools for python development
             jupyter
             ipython
           ]);
@@ -97,20 +89,24 @@
           QEMU_OPTS = "-machine accel=kvm";
 
           buildInputs = with pkgs; [
+            # Build tools & languages
             flutter
-            qemu_kvm
             gradle
             jdk21
             jdk17
-            mesa-demos
-            firebase-tools
-            ffmpeg
-            libsecret
             pkg-config
-            # Custom environments
-            devPython
+            # Android build
             devSdk
+            # Linux build
             gtk3
+            # Emulation
+            qemu_kvm
+            mesa-demos
+            ffmpeg
+            # Service management
+            devPython
+            firebase-tools
+            libsecret
           ];
           # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
           LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [pkgs.vulkan-loader pkgs.libGL]}";
