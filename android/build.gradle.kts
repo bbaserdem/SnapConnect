@@ -1,3 +1,6 @@
+import org.gradle.api.JavaVersion
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+
 buildscript {
     repositories {
         google()
@@ -29,9 +32,14 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
+
     project.evaluationDependsOn(":app")
+
+    project.plugins.withType<JavaPlugin>().configureEach {
+        project.the<JavaPluginExtension>().toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
