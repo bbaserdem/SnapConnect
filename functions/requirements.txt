@@ -1,0 +1,8 @@
+openai>=1.12.0
+firebase-admin>=6.4.0
+google-cloud-storage>=2.14.0
+google-cloud-firestore>=2.12.0
+faiss-cpu>=1.7.4
+numpy>=1.24.0
+functions-framework>=3.4.0
+firebase-functions>=0.0.3

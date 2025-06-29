@@ -106,6 +106,7 @@
             # Service management
             devPython
             firebase-tools
+            google-cloud-sdk
             libsecret
           ];
           # emulator related: vulkan-loader and libGL shared libs are necessary for hardware decoding
