@@ -3,6 +3,13 @@
 # If we adopt Git LFS for the index:
 # *.index filter=lfs diff=lfs merge=lfs -text
 
+# Secrets
+.gcloud/*
+.env*
+GoogleService-Info.plist
+google-services.json
+firebase_app_id_file.json
+
 # Flutter/Dart/Pub related
 .dart_tool/
 .flutter-plugins
@@ -76,13 +83,6 @@ app.*.map.json
 /windows/flutter/generated_plugin_registrant.cc
 /windows/flutter/generated_plugin_registrant.h
 
-# Firebase related
-GoogleService-Info.plist
-google-services.json
-firebase_app_id_file.json
-
-# Environment variables
-.env*
 
 # Nix related
 !.envrc

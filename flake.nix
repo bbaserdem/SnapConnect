@@ -88,6 +88,10 @@
           # Note: ANDROID_EMULATOR_USE_SYSTEM_LIBS is NOT set in NixOS as it conflicts with Nix store paths
           QEMU_OPTS = "-machine accel=kvm";
 
+          # Set gcloud account name
+          CLOUDSDK_CONFIG = "./.gcloud";
+          CLOUDSDK_ACTIVE_CONFIG_NAME = "development";
+
           buildInputs = with pkgs; [
             # Build tools & languages
             flutter
